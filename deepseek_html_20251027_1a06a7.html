@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArRanger</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --border-color: #ccc;
+            --hover-color: #f0f0f0;
+            --header-bg: #f9f9f9;
+            --section-height: 40px;
+            --bar-height: 30px;
+            --timeline-height: 30px;
+            --line-height: 50px;
+            --header-height: 100px;
+            --button-color: #4a6fa5;
+            --top-panel-height: calc(var(--section-height) + var(--bar-height) + var(--timeline-height));
+            --left-panel-width: 100px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-width: 400px;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Стили для скрытия scrollbar'ов */
+        .scrollable {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .scrollable::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* НОВЫЙ ПОДХОД С SHADOW-CONTAINER */
+        .shadow-container {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .shadow-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            box-shadow: none;
+        }
+
+        .shadow-container.shadow-top::after {
+            box-shadow: inset 0 8px 8px -8px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+        
+        .shadow-container.shadow-bottom::after {
+            box-shadow: inset 0 -8px 8px -8px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+        
+        .shadow-container.shadow-left::after {
+            box-shadow: inset 8px 0 8px -8px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+        
+        .shadow-container.shadow-right::after {
+            box-shadow: inset -8px 0 8px -8px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+        
+        .shadow-container.shadow-top-bottom::after {
+            box-shadow: inset 0 8px 8px -8px rgba(0, 0, 0, 0.3), 
+                        inset 0 -8px 8px -8px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+        
+        .shadow-container.shadow-left-right::after {
+            box-shadow: inset 8px 0 8px -8px rgba(0, 0, 0, 0.3), 
+                        inset -8px 0 8px -8px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+        
+        .shadow-container.shadow-all::after {
+            box-shadow: inset 0 8px 8px -8px rgba(0, 0, 0, 0.3),
+                        inset 0 -8px 8px -8px rgba(0, 0, 0, 0.3),
+                        inset 8px 0 8px -8px rgba(0, 0, 0, 0.3),
+                        inset -8px 0 8px -8px rgba(0, 0, 0, 0.3);
+            opacity: 1;
+        }
+
+        /* Увеличиваем z-index для секций и ячеек, чтобы они были под тенями */
+        .section, .track-cell {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Шапка приложения */
+        .app-header {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-top {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            font-size: 40px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            margin-right: 20px;
+        }
+
+        .track-title {
+            font-size: 32px;
+            font-weight: bold;
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            min-width: 300px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .track-title:hover {
+            background-color: var(--hover-color);
+        }
+
+        .track-title:hover .edit-btn {
+            opacity: 1;
+        }
+
+        .track-title input {
+            font-size: 32px;
+            font-weight: bold;
+            border: none;
+            outline: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        .edit-btn {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 16px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+        }
+
+        .edit-btn:hover {
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+            min-width: 300px;
+        }
+
+        .app-description {
+            margin-bottom: 10px;
+        }
+
+        .settings-container {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            align-self: flex-start;
+            margin-left: auto;
+        }
+
+        .settings-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .setting-item {
+            margin-bottom: 8px;
+        }
+
+        .setting-item label {
+            display: inline-block;
+            width: 100px;
+        }
+
+        .signature-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .signature-container select {
+            width: 50px;
+        }
+
+        /* НОВАЯ СТРУКТУРА WORKSPACE */
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 320px);
+            overflow: hidden;
+        }
+
+        /* Верхний контейнер workspace */
+        .workspace-top {
+            display: flex;
+            height: auto;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        /* Левый верхний фиксированный контейнер */
+        .fixed-left-top {
+            width: var(--left-panel-width);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .header-cell {
+            padding: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .header-cell.sections {
+            height: var(--section-height);
+        }
+
+        .header-cell.bars {
+            height: var(--bar-height);
+        }
+
+        .header-cell.timeline {
+            height: var(--timeline-height);
+        }
+
+        /* Правый верхний прокручиваемый контейнер - ОБЕРНУТ В SHADOW-CONTAINER */
+        .fixed-right-top-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .fixed-right-top {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .content-row {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            min-width: min-content;
+        }
+
+        .content-row.sections {
+            height: var(--section-height);
+        }
+
+        .content-row.bars {
+            height: var(--bar-height);
+        }
+
+        .content-row.timeline {
+            height: var(--timeline-height);
+        }
+
+        .section {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-right: 1px solid var(--border-color);
+            cursor: move;
+            user-select: none;
+            flex-shrink: 0;
+            padding: 2px;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+
+        .section-name {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .section-duration {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .section:hover .section-controls {
+            display: flex;
+        }
+
+        .section-controls {
+            position: absolute;
+            right: 1px;
+            display: none;
+            flex-direction: column;
+        }
+
+        .bar {
+            width: 30px;
+            height: 100%;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .timeline-container {
+            position: relative;
+            height: 100%;
+            min-width: min-content;
+        }
+
+        .timeline-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #000;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            bottom: 0;
+            height: 10px;
+            border-left: 1px solid #000;
+        }
+
+        .timeline-marker.major {
+            height: 15px;
+            border-left-width: 2px;
+        }
+
+        .timeline-label {
+            position: absolute;
+            bottom: 15px;
+            font-size: 10px;
+            transform: translateX(-50%);
+        }
+
+        /* Разделительная линия */
+        .workspace-separator {
+            height: 20px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .separator-line {
+            width: 100%;
+            height: 2px;
+            border-top: 2px dashed #ccc;
+        }
+
+        /* Контейнер для заголовка Lines */
+        .lines-header-container {
+            width: var(--left-panel-width);
+            flex-shrink: 0;
+            border: 1px solid var(--border-color);
+            border-radius: 0;
+            margin-bottom: 5px;
+        }
+
+        .lines-header-content {
+            height: var(--line-height);
+            padding-top: 10px;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+        }
+
+        /* Нижний контейнер workspace */
+        .workspace-bottom {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Левый нижний контейнер с заголовками дорожек - ОБЕРНУТ В SHADOW-CONTAINER */
+        .fixed-left-bottom-container {
+            width: var(--left-panel-width);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .track-headers-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .track-header {
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 5px;
+            flex-shrink: 0;
+            position: relative;
+            min-height: 50px;
+        }
+
+        .track-header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            position: relative;
+            padding: 5px 0;
+        }
+
+        .track-number {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 10px;
+            color: #888;
+            z-index: 1;
+        }
+
+        .track-name {
+            flex: 1;
+            cursor: text;
+            padding: 2px 4px;
+            border: none;
+            border-radius: 3px;
+            resize: none;
+            overflow: hidden;
+            font-size: 12px;
+            line-height: 1.2;
+            min-height: 20px;
+            max-width: calc(100% - 30px);
+            margin-right: 5px;
+            margin-left: 15px;
+            font-weight: bold;
+            background: transparent;
+            outline: none;
+            white-space: normal;
+            word-wrap: break-word;
+            height: auto;
+        }
+
+        .track-controls {
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .track-header:hover .track-controls {
+            opacity: 1;
+        }
+
+        /* Кнопки приложения (кроме модальных окон) - размер шрифта 10px */
+        .delete-track-btn, .add-btn, .section-control, .edit-btn {
+            font-size: 10px;
+        }
+
+        .delete-track-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--button-color);
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+        }
+
+        .delete-track-btn:hover {
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .add-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--button-color);
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+        }
+
+        .add-btn:hover {
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        /* Правый нижний контейнер с дорожками - ОБЕРНУТ В SHADOW-CONTAINER */
+        .scrollable-right-bottom-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .scrollable-right-bottom {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .track-row {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            min-width: min-content;
+            min-height: 50px;
+            transition: height 0.3s ease;
+        }
+
+        .track-cell {
+            border-right: 1px solid var(--border-color);
+            padding: 5px;
+            overflow: hidden;
+            flex-shrink: 0;
+            transition: width 0.3s ease, opacity 0.3s ease;
+        }
+
+        .track-cell textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            resize: none;
+            outline: none;
+            font-size: 12px;
+            background: transparent;
+            line-height: 1.4;
+            padding: 4px;
+            overflow: hidden;
+        }
+
+        .track-cell textarea::placeholder {
+            color: #888;
+        }
+
+        /* Стили для кнопок в секциях */
+        .section-control {
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 2px;
+            color: var(--button-color);
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+        }
+
+        .section-control:hover {
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        /* Анимация удаления - изменена для горизонтального сжатия */
+        @keyframes fadeOutHorizontal {
+            from {
+                opacity: 1;
+                width: var(--original-width);
+            }
+            to {
+                opacity: 0;
+                width: 0;
+            }
+        }
+
+        .section.removing,
+        .track-cell.removing {
+            animation: fadeOutHorizontal 0.3s ease forwards;
+            overflow: hidden;
+        }
+
+        /* Модальные окна и остальные стили остаются без изменений */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            min-width: 300px;
+            max-width: 90%;
+        }
+
+        .modal-title {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .section-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .section-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section-item:last-child {
+            border-bottom: none;
+        }
+
+        .section-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+
+        .section-info {
+            flex: 1;
+        }
+
+        .section-name {
+            font-weight: bold;
+        }
+
+        .section-duration {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .section-add-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 16px;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            transition: background-color 0.2s ease;
+        }
+
+        .section-add-btn:hover {
+            background-color: rgba(74, 111, 165, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 5px;
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+        }
+
+        .color-preview {
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--border-color);
+            margin-right: 10px;
+        }
+
+        .duration-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .duration-controls button {
+            width: 30px;
+            height: 30px;
+            background: none;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .duration-controls input {
+            width: 60px;
+            text-align: center;
+            margin: 0 5px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+
+        .modal-buttons button {
+            margin-left: 10px;
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 3px;
+        }
+
+        .btn-secondary {
+            background-color: #f0f0f0;
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .track-title {
+                margin-top: 10px;
+            }
+
+            .settings-container {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Шапка приложения -->
+    <header class="app-header">
+        <div class="header-top">
+            <div class="logo">ArRanger</div>
+            <div class="track-title" id="trackTitle">
+                <span>New track</span>
+                <button class="edit-btn">✏️</button>
+            </div>
+        </div>
+        <div class="header-left">
+            <div class="app-description">
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+                <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+            </div>
+            <div class="settings-container">
+                <div class="settings-title">Settings</div>
+                <div class="setting-item">
+                    <label for="showTimeline">Show timeline:</label>
+                    <input type="checkbox" id="showTimeline">
+                </div>
+                <div class="setting-item">
+                    <label for="bpm">BPM:</label>
+                    <input type="number" id="bpm" min="1" max="256" value="120">
+                </div>
+                <div class="setting-item">
+                    <label for="signature">Signature:</label>
+                    <div class="signature-container">
+                        <select id="signatureTop">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4" selected>4</option>
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                        </select>
+                        <span>/</span>
+                        <select id="signatureBottom">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="4" selected>4</option>
+                            <option value="8">8</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- НОВАЯ СТРУКТУРА WORKSPACE -->
+    <div class="workspace">
+        <!-- Верхний контейнер workspace -->
+        <div class="workspace-top">
+            <!-- Левый верхний фиксированный контейнер -->
+            <div class="fixed-left-top">
+                <div class="header-cell sections">
+                    <span>Sections</span>
+                    <button class="add-btn" id="addSectionBtn">+</button>
+                </div>
+                <div class="header-cell bars">
+                    <span>Bars</span>
+                </div>
+                <div class="header-cell timeline" id="timelineHeader">
+                    <span>Timeline</span>
+                </div>
+            </div>
+            
+            <!-- Правый верхний прокручиваемый контейнер ОБЕРНУТ В SHADOW-CONTAINER -->
+            <div class="fixed-right-top-container shadow-container" id="fixedRightTopContainer">
+                <div class="fixed-right-top scrollable" id="fixedRightTop">
+                    <div class="content-row sections" id="sectionsRow">
+                        <!-- Секции будут добавляться здесь -->
+                    </div>
+                    <div class="content-row bars" id="barsRow">
+                        <!-- Такты будут добавляться здесь -->
+                    </div>
+                    <div class="content-row timeline" id="timelineRow">
+                        <!-- Таймлайн будет отображаться здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Разделительная линия -->
+        <div class="workspace-separator">
+            <div class="separator-line"></div>
+        </div>
+        
+        <!-- Контейнер для заголовка Lines -->
+        <div class="lines-header-container">
+            <div class="lines-header-content">
+                <span>Lines</span>
+                <button class="add-btn" id="addLineBtn">+</button>
+            </div>
+        </div>
+        
+        <!-- Нижний контейнер workspace -->
+        <div class="workspace-bottom">
+            <!-- Левый нижний контейнер с заголовками дорожек ОБЕРНУТ В SHADOW-CONTAINER -->
+            <div class="fixed-left-bottom-container shadow-container" id="trackHeadersContainer">
+                <div class="track-headers-container scrollable" id="trackHeaders">
+                    <!-- Заголовки дорожек будут добавляться здесь -->
+                </div>
+            </div>
+            
+            <!-- Правый нижний прокручиваемый контейнер с дорожками ОБЕРНУТ В SHADOW-CONTAINER -->
+            <div class="scrollable-right-bottom-container shadow-container" id="tracksContainerContainer">
+                <div class="scrollable-right-bottom scrollable" id="tracksContainer">
+                    <!-- Дорожки будут добавляться здесь -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div class="modal" id="addSectionModal">
+        <div class="modal-content">
+            <div class="modal-title">Add section</div>
+            <div class="section-list" id="standardSectionsList">
+                <!-- Стандартные секции будут добавляться здесь -->
+            </div>
+            <button class="btn-secondary" id="customSectionBtn">Custom section</button>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="closeAddSectionModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addCustomSectionModal">
+        <div class="modal-content">
+            <div class="modal-title">Add custom section</div>
+            <div class="form-group">
+                <label for="sectionName">Section name:</label>
+                <input type="text" id="sectionName" placeholder="Enter section name">
+            </div>
+            <div class="form-group">
+                <label for="sectionColor">Color:</label>
+                <div class="color-picker">
+                    <div class="color-preview" id="colorPreview"></div>
+                    <input type="color" id="sectionColor" value="#daa520">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="sectionDuration">Duration:</label>
+                <div class="duration-controls">
+                    <button id="decreaseDuration">-</button>
+                    <input type="number" id="sectionDuration" min="1" max="64" value="4">
+                    <button id="increaseDuration">+</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="closeCustomSectionModal">Cancel</button>
+                <button class="btn-primary" id="addCustomSection">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="editSectionModal">
+        <div class="modal-content">
+            <div class="modal-title">Edit section</div>
+            <div class="form-group">
+                <label for="editSectionName">Section name:</label>
+                <input type="text" id="editSectionName" placeholder="Enter section name">
+            </div>
+            <div class="form-group">
+                <label for="editSectionColor">Color:</label>
+                <div class="color-picker">
+                    <div class="color-preview" id="editColorPreview"></div>
+                    <input type="color" id="editSectionColor" value="#daa520">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="editSectionDuration">Duration:</label>
+                <div class="duration-controls">
+                    <button id="editDecreaseDuration">-</button>
+                    <input type="number" id="editSectionDuration" min="1" max="64" value="4">
+                    <button id="editIncreaseDuration">+</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="closeEditSectionModal">Cancel</button>
+                <button class="btn-primary" id="applySectionChanges">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Данные приложения
+        const standardSections = [
+            { "Name": "Intro", "Color": "#DAE8FC", "Duration": 4 },
+            { "Name": "Verse", "Color": "#D5E8D4", "Duration": 8 },
+            { "Name": "Bridge", "Color": "#FFF2CC", "Duration": 4 },
+            { "Name": "Chorus", "Color": "#FFE6CC", "Duration": 8 },
+            { "Name": "Tag", "Color": "#F8CECC", "Duration": 4 },
+            { "Name": "Middle 8", "Color": "#F5F5F5", "Duration": 8 },
+            { "Name": "Outro", "Color": "#E1D5E7", "Duration": 4 }
+        ];
+
+        let sections = [];
+        let tracks = [];
+        let currentEditingSection = null;
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Инициализация элементов интерфейса
+            initializeTrackTitle();
+            initializeSettings();
+            initializeStandardSections();
+            initializeTimeline();
+            initializeTracks();
+            
+            // Добавление обработчиков событий
+            document.getElementById('addSectionBtn').addEventListener('click', showAddSectionModal);
+            document.getElementById('addLineBtn').addEventListener('click', addNewTrack);
+            document.getElementById('customSectionBtn').addEventListener('click', showCustomSectionModal);
+            document.getElementById('closeAddSectionModal').addEventListener('click', closeAddSectionModal);
+            document.getElementById('closeCustomSectionModal').addEventListener('click', closeCustomSectionModal);
+            document.getElementById('addCustomSection').addEventListener('click', addCustomSection);
+            document.getElementById('closeEditSectionModal').addEventListener('click', closeEditSectionModal);
+            document.getElementById('applySectionChanges').addEventListener('click', applySectionChanges);
+            document.getElementById('decreaseDuration').addEventListener('click', () => changeDuration(-1));
+            document.getElementById('increaseDuration').addEventListener('click', () => changeDuration(1));
+            document.getElementById('editDecreaseDuration').addEventListener('click', () => changeEditDuration(-1));
+            document.getElementById('editIncreaseDuration').addEventListener('click', () => changeEditDuration(1));
+            document.getElementById('sectionColor').addEventListener('input', updateColorPreview);
+            document.getElementById('editSectionColor').addEventListener('input', updateEditColorPreview);
+            
+            // Добавление начальных секций (как на макете)
+            addSection({ "Name": "Intro", "Color": "#DAE8FC", "Duration": 4 });
+            addSection({ "Name": "Verse", "Color": "#D5E8D4", "Duration": 8 });
+            addSection({ "Name": "Chorus", "Color": "#FFE6CC", "Duration": 8 });
+            
+            // Добавление начальных дорожек
+            addDefaultTracks();
+            
+            // Синхронизация прокрутки для новой структуры
+            synchronizeScroll();
+            
+            // Изначально скрываем timeline
+            updateTimelineVisibility();
+            
+            // Инициализация теней для скролл-контейнеров
+            initializeScrollShadows();
+        }
+
+        // Функции синхронизации прокрутки для новой структуры
+        function synchronizeScroll() {
+            const fixedRightTop = document.querySelector('.fixed-right-top');
+            const scrollableRightBottom = document.querySelector('.scrollable-right-bottom');
+            const trackHeaders = document.getElementById('trackHeaders');
+            
+            // Синхронизация горизонтальной прокрутки между верхним и нижним правыми контейнерами
+            fixedRightTop.addEventListener('scroll', function() {
+                scrollableRightBottom.scrollLeft = this.scrollLeft;
+                updateScrollShadows();
+            });
+            
+            scrollableRightBottom.addEventListener('scroll', function() {
+                fixedRightTop.scrollLeft = this.scrollLeft;
+                updateScrollShadows();
+            });
+            
+            // Синхронизация вертикальной прокрутки между левым и правым нижними контейнерами
+            trackHeaders.addEventListener('scroll', function() {
+                scrollableRightBottom.scrollTop = this.scrollTop;
+                updateScrollShadows();
+            });
+            
+            scrollableRightBottom.addEventListener('scroll', function() {
+                trackHeaders.scrollTop = this.scrollTop;
+                updateScrollShadows();
+            });
+        }
+
+        // Функция для обновления видимости timeline
+        function updateTimelineVisibility() {
+            const showTimeline = document.getElementById('showTimeline').checked;
+            const timelineHeader = document.getElementById('timelineHeader');
+            const timelineRow = document.getElementById('timelineRow');
+            
+            if (showTimeline) {
+                timelineHeader.style.display = 'flex';
+                timelineRow.style.display = 'flex';
+                updateTimeline();
+            } else {
+                timelineHeader.style.display = 'none';
+                timelineRow.style.display = 'none';
+            }
+        }
+
+        // Функция для инициализации и обновления теней при скролле
+        function initializeScrollShadows() {
+            updateScrollShadows();
+            
+            // Обновляем тени при изменении размера окна
+            window.addEventListener('resize', updateScrollShadows);
+        }
+
+        // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ ТЕНЕЙ
+        function updateScrollShadows() {
+            const containers = [
+                { 
+                    element: document.getElementById('fixedRightTop'), 
+                    container: document.getElementById('fixedRightTopContainer'),
+                    horizontal: true, 
+                    vertical: false 
+                },
+                { 
+                    element: document.getElementById('tracksContainer'), 
+                    container: document.getElementById('tracksContainerContainer'),
+                    horizontal: true, 
+                    vertical: true 
+                },
+                { 
+                    element: document.getElementById('trackHeaders'), 
+                    container: document.getElementById('trackHeadersContainer'),
+                    horizontal: false, 
+                    vertical: true 
+                }
+            ];
+            
+            containers.forEach(item => {
+                if (!item.element || !item.container) return;
+                
+                const isScrolledRight = item.element.scrollLeft + item.element.clientWidth < item.element.scrollWidth - 1;
+                const isScrolledBottom = item.element.scrollTop + item.element.clientHeight < item.element.scrollHeight - 1;
+                const isScrolledLeft = item.element.scrollLeft > 0;
+                const isScrolledTop = item.element.scrollTop > 0;
+                
+                // Удаляем все классы теней
+                const shadowClasses = [
+                    'shadow-top', 'shadow-bottom', 'shadow-left', 'shadow-right',
+                    'shadow-top-bottom', 'shadow-left-right', 'shadow-all'
+                ];
+                item.container.classList.remove(...shadowClasses);
+                
+                // Определяем, какие тени нужно добавить
+                let shadows = [];
+                
+                if (isScrolledTop && item.vertical) shadows.push('top');
+                if (isScrolledBottom && item.vertical) shadows.push('bottom');
+                if (isScrolledLeft && item.horizontal) shadows.push('left');
+                if (isScrolledRight && item.horizontal) shadows.push('right');
+                
+                // Добавляем соответствующий класс тени
+                if (shadows.length > 0) {
+                    if (shadows.length === 4) {
+                        item.container.classList.add('shadow-all');
+                    } else if (shadows.length === 2) {
+                        if (shadows.includes('top') && shadows.includes('bottom')) {
+                            item.container.classList.add('shadow-top-bottom');
+                        } else if (shadows.includes('left') && shadows.includes('right')) {
+                            item.container.classList.add('shadow-left-right');
+                        } else {
+                            // Для других комбинаций просто добавляем обе тени
+                            shadows.forEach(shadow => {
+                                item.container.classList.add(`shadow-${shadow}`);
+                            });
+                        }
+                    } else if (shadows.length === 1) {
+                        item.container.classList.add(`shadow-${shadows[0]}`);
+                    } else if (shadows.length === 3) {
+                        // Для трех теней используем комбинацию
+                        shadows.forEach(shadow => {
+                            item.container.classList.add(`shadow-${shadow}`);
+                        });
+                    }
+                }
+            });
+        }
+
+        // Остальные функции JavaScript остаются без изменений
+        function initializeTrackTitle() {
+            const trackTitle = document.getElementById('trackTitle');
+            const editBtn = trackTitle.querySelector('.edit-btn');
+            
+            editBtn.style.width = '20px';
+            editBtn.style.height = '20px';
+            editBtn.style.display = 'flex';
+            editBtn.style.alignItems = 'center';
+            editBtn.style.justifyContent = 'center';
+            editBtn.style.borderRadius = '3px';
+            editBtn.style.transition = 'background-color 0.2s ease';
+            
+            editBtn.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(74, 111, 165, 0.1)';
+            });
+            
+            editBtn.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = 'transparent';
+            });
+            
+            editBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const span = trackTitle.querySelector('span');
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = span.textContent;
+                
+                trackTitle.innerHTML = '';
+                trackTitle.appendChild(input);
+                input.focus();
+                input.select();
+                
+                input.addEventListener('blur', function() {
+                    const newSpan = document.createElement('span');
+                    newSpan.textContent = input.value || 'New track';
+                    trackTitle.innerHTML = '';
+                    trackTitle.appendChild(newSpan);
+                    trackTitle.appendChild(editBtn);
+                });
+                
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        input.blur();
+                    }
+                });
+            });
+        }
+
+        function initializeSettings() {
+            const showTimeline = document.getElementById('showTimeline');
+            
+            showTimeline.addEventListener('change', function() {
+                updateTimelineVisibility();
+            });
+            
+            // Изначально скрываем timeline
+            updateTimelineVisibility();
+        }
+
+        function initializeStandardSections() {
+            const sectionsList = document.getElementById('standardSectionsList');
+            sectionsList.innerHTML = '';
+            
+            standardSections.forEach(section => {
+                const sectionItem = document.createElement('div');
+                sectionItem.className = 'section-item';
+                
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'section-color';
+                colorDiv.style.backgroundColor = section.Color;
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'section-info';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'section-name';
+                nameDiv.textContent = section.Name;
+                
+                const durationDiv = document.createElement('div');
+                durationDiv.className = 'section-duration';
+                durationDiv.textContent = `${section.Duration} bars`;
+                
+                infoDiv.appendChild(nameDiv);
+                infoDiv.appendChild(durationDiv);
+                
+                const addBtn = document.createElement('button');
+                addBtn.className = 'section-add-btn';
+                addBtn.textContent = '→';
+                addBtn.addEventListener('click', function() {
+                    addSection(section);
+                    closeAddSectionModal();
+                });
+                
+                sectionItem.appendChild(colorDiv);
+                sectionItem.appendChild(infoDiv);
+                sectionItem.appendChild(addBtn);
+                
+                sectionsList.appendChild(sectionItem);
+            });
+        }
+
+        function initializeTimeline() {
+            // Timeline будет обновляться при изменении настроек и секций
+        }
+
+        function initializeTracks() {
+            // Tracks будут инициализированы при добавлении
+        }
+
+        function addDefaultTracks() {
+            const defaultTracks = [
+                { name: "Drums", height: 50 },
+                { name: "Guitar", height: 50 },
+                { name: "Bass", height: 50 },
+                { name: "Voice", height: 50 }
+            ];
+            
+            defaultTracks.forEach(trackData => {
+                const track = {
+                    id: Date.now() + Math.random(),
+                    name: trackData.name,
+                    height: trackData.height,
+                    cells: []
+                };
+                
+                sections.forEach(() => {
+                    track.cells.push('');
+                });
+                
+                tracks.push(track);
+            });
+            
+            renderTrackHeaders();
+            renderTracks();
+        }
+
+        function showAddSectionModal() {
+            document.getElementById('addSectionModal').style.display = 'flex';
+        }
+
+        function closeAddSectionModal() {
+            document.getElementById('addSectionModal').style.display = 'none';
+        }
+
+        function showCustomSectionModal() {
+            document.getElementById('addCustomSectionModal').style.display = 'flex';
+            closeAddSectionModal();
+        }
+
+        function closeCustomSectionModal() {
+            document.getElementById('addCustomSectionModal').style.display = 'none';
+        }
+
+        function updateColorPreview() {
+            const color = document.getElementById('sectionColor').value;
+            document.getElementById('colorPreview').style.backgroundColor = color;
+        }
+
+        function updateEditColorPreview() {
+            const color = document.getElementById('editSectionColor').value;
+            document.getElementById('editColorPreview').style.backgroundColor = color;
+        }
+
+        function changeDuration(change) {
+            const durationInput = document.getElementById('sectionDuration');
+            let value = parseInt(durationInput.value) + change;
+            value = Math.max(1, Math.min(64, value));
+            durationInput.value = value;
+        }
+
+        function changeEditDuration(change) {
+            const durationInput = document.getElementById('editSectionDuration');
+            let value = parseInt(durationInput.value) + change;
+            value = Math.max(1, Math.min(64, value));
+            durationInput.value = value;
+        }
+
+        function addCustomSection() {
+            const name = document.getElementById('sectionName').value || 'Custom';
+            const color = document.getElementById('sectionColor').value;
+            const duration = parseInt(document.getElementById('sectionDuration').value);
+            
+            const section = {
+                Name: name,
+                Color: color,
+                Duration: duration
+            };
+            
+            addSection(section);
+            closeCustomSectionModal();
+            
+            document.getElementById('sectionName').value = '';
+            document.getElementById('sectionColor').value = '#daa520';
+            document.getElementById('sectionDuration').value = 4;
+            updateColorPreview();
+        }
+
+        function addSection(sectionData) {
+            const section = {
+                id: Date.now() + Math.random(),
+                name: sectionData.Name,
+                color: sectionData.Color,
+                duration: sectionData.Duration,
+                width: sectionData.Duration * 30
+            };
+            
+            sections.push(section);
+            
+            tracks.forEach(track => {
+                track.cells.push('');
+            });
+            
+            renderSections();
+            updateBars();
+            updateTimeline();
+            renderTracks();
+            updateScrollShadows();
+        }
+
+        function renderSections() {
+            const sectionsRow = document.getElementById('sectionsRow');
+            sectionsRow.innerHTML = '';
+            
+            sections.forEach(section => {
+                const sectionElement = document.createElement('div');
+                sectionElement.className = 'section';
+                sectionElement.style.backgroundColor = section.color;
+                sectionElement.style.width = `${section.width}px`;
+                sectionElement.setAttribute('data-id', section.id);
+                sectionElement.setAttribute('data-width', section.width);
+                
+                const nameElement = document.createElement('div');
+                nameElement.className = 'section-name';
+                nameElement.textContent = section.name;
+                
+                const durationElement = document.createElement('div');
+                durationElement.className = 'section-duration';
+                durationElement.textContent = `Bars: ${section.duration}`;
+                
+                sectionElement.appendChild(nameElement);
+                sectionElement.appendChild(durationElement);
+                
+                const sectionControls = document.createElement('div');
+                sectionControls.className = 'section-controls';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'section-control';
+                editBtn.textContent = '✏️';
+                editBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    showEditSectionModal(section);
+                });
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'section-control';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteSection(section.id);
+                });
+                
+                sectionControls.appendChild(editBtn);
+                sectionControls.appendChild(deleteBtn);
+                sectionElement.appendChild(sectionControls);
+                
+                sectionElement.setAttribute('draggable', 'true');
+                sectionElement.addEventListener('dragstart', function(e) {
+                    e.dataTransfer.setData('text/plain', section.id);
+                });
+                
+                sectionElement.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                });
+                
+                sectionElement.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    const draggedId = e.dataTransfer.getData('text/plain');
+                    moveSection(draggedId, section.id);
+                });
+                
+                sectionsRow.appendChild(sectionElement);
+            });
+        }
+
+        function showEditSectionModal(section) {
+            currentEditingSection = section;
+            
+            document.getElementById('editSectionName').value = section.name;
+            document.getElementById('editSectionColor').value = section.color;
+            document.getElementById('editSectionDuration').value = section.duration;
+            
+            updateEditColorPreview();
+            document.getElementById('editSectionModal').style.display = 'flex';
+        }
+
+        function closeEditSectionModal() {
+            document.getElementById('editSectionModal').style.display = 'none';
+            currentEditingSection = null;
+        }
+
+        function applySectionChanges() {
+            if (!currentEditingSection) return;
+            
+            const name = document.getElementById('editSectionName').value;
+            const color = document.getElementById('editSectionColor').value;
+            const duration = parseInt(document.getElementById('editSectionDuration').value);
+            
+            currentEditingSection.name = name;
+            currentEditingSection.color = color;
+            currentEditingSection.duration = duration;
+            currentEditingSection.width = duration * 30;
+            
+            renderSections();
+            updateBars();
+            updateTimeline();
+            renderTracks();
+            closeEditSectionModal();
+        }
+
+        function deleteSection(sectionId) {
+            const sectionIndex = sections.findIndex(s => s.id === sectionId);
+            if (sectionIndex === -1) return;
+
+            const sectionElement = document.querySelector(`.section[data-id="${sectionId}"]`);
+            const sectionWidth = sectionElement ? sectionElement.getAttribute('data-width') : '0';
+            
+            const trackCells = document.querySelectorAll(`.track-row .track-cell:nth-child(${sectionIndex + 1})`);
+            
+            if (sectionElement) {
+                sectionElement.style.setProperty('--original-width', `${sectionWidth}px`);
+                sectionElement.classList.add('removing');
+                
+                trackCells.forEach(cell => {
+                    cell.style.setProperty('--original-width', `${sectionWidth}px`);
+                    cell.classList.add('removing');
+                });
+                
+                setTimeout(() => {
+                    sections = sections.filter(s => s.id !== sectionId);
+                    
+                    tracks.forEach(track => {
+                        if (track.cells.length > sectionIndex) {
+                            track.cells.splice(sectionIndex, 1);
+                        }
+                    });
+                    
+                    renderSections();
+                    updateBars();
+                    updateTimeline();
+                    renderTracks();
+                    updateScrollShadows();
+                }, 300);
+            }
+        }
+
+        function moveSection(draggedId, targetId) {
+            const draggedIndex = sections.findIndex(s => s.id.toString() === draggedId.toString());
+            const targetIndex = sections.findIndex(s => s.id.toString() === targetId.toString());
+            
+            if (draggedIndex === -1 || targetIndex === -1) return;
+            
+            const [draggedSection] = sections.splice(draggedIndex, 1);
+            sections.splice(targetIndex, 0, draggedSection);
+            
+            tracks.forEach(track => {
+                if (track.cells.length > draggedIndex) {
+                    const [draggedCell] = track.cells.splice(draggedIndex, 1);
+                    track.cells.splice(targetIndex, 0, draggedCell);
+                }
+            });
+            
+            renderSections();
+            renderTracks();
+        }
+
+        function updateBars() {
+            const barsRow = document.getElementById('barsRow');
+            barsRow.innerHTML = '';
+            
+            const totalBars = sections.reduce((sum, section) => sum + section.duration, 0);
+            
+            for (let i = 1; i <= totalBars; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.textContent = i;
+                barsRow.appendChild(bar);
+            }
+        }
+
+        function updateTimeline() {
+            if (!document.getElementById('showTimeline').checked) return;
+            
+            const timelineRow = document.getElementById('timelineRow');
+            timelineRow.innerHTML = '';
+            
+            const timelineContainer = document.createElement('div');
+            timelineContainer.className = 'timeline-container';
+            
+            const totalBars = sections.reduce((sum, section) => sum + section.duration, 0);
+            const barWidth = 30;
+            const totalWidth = totalBars * barWidth;
+            timelineContainer.style.width = `${totalWidth}px`;
+            
+            const timelineLine = document.createElement('div');
+            timelineLine.className = 'timeline-line';
+            timelineContainer.appendChild(timelineLine);
+            
+            const bpm = parseInt(document.getElementById('bpm').value);
+            const signatureTop = parseInt(document.getElementById('signatureTop').value);
+            const totalSeconds = 60 * signatureTop * totalBars / bpm;
+            
+            for (let seconds = 0; seconds <= totalSeconds; seconds++) {
+                const position = (seconds / totalSeconds) * totalWidth;
+                
+                const marker = document.createElement('div');
+                marker.className = 'timeline-marker';
+                marker.style.left = `${position}px`;
+                
+                if (seconds % 5 === 0) {
+                    marker.classList.add('major');
+                    
+                    const label = document.createElement('div');
+                    label.className = 'timeline-label';
+                    label.textContent = `${seconds}s`;
+                    label.style.left = `${position}px`;
+                    timelineContainer.appendChild(label);
+                }
+                
+                timelineContainer.appendChild(marker);
+            }
+            
+            timelineRow.appendChild(timelineContainer);
+        }
+
+        function addNewTrack() {
+            const track = {
+                id: Date.now() + Math.random(),
+                name: 'New line',
+                height: 50,
+                cells: Array(sections.length).fill('')
+            };
+            
+            tracks.push(track);
+            renderTrackHeaders();
+            renderTracks();
+            updateScrollShadows();
+        }
+
+        function renderTrackHeaders() {
+            const trackHeadersContainer = document.getElementById('trackHeaders');
+            trackHeadersContainer.innerHTML = '';
+            
+            tracks.forEach((track, index) => {
+                const trackHeader = document.createElement('div');
+                trackHeader.className = 'track-header';
+                trackHeader.setAttribute('data-id', track.id);
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'track-header-content';
+                
+                const trackNumber = document.createElement('div');
+                trackNumber.className = 'track-number';
+                trackNumber.textContent = index + 1;
+                
+                trackHeader.appendChild(trackNumber);
+                
+                const nameTextarea = document.createElement('textarea');
+                nameTextarea.className = 'track-name';
+                nameTextarea.value = track.name;
+                
+                nameTextarea.addEventListener('input', function() {
+                    track.name = this.value;
+                    
+                    this.style.height = 'auto';
+                    this.style.height = this.scrollHeight + 'px';
+                    
+                    updateTrackRowHeight(track.id);
+                    
+                    updateTrackPlaceholders(track.id);
+                });
+                
+                setTimeout(() => {
+                    nameTextarea.style.height = 'auto';
+                    nameTextarea.style.height = nameTextarea.scrollHeight + 'px';
+                    
+                    updateTrackRowHeight(track.id);
+                }, 0);
+                
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'track-controls';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-track-btn';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    deleteTrack(track.id);
+                });
+                
+                controlsDiv.appendChild(deleteBtn);
+                contentDiv.appendChild(nameTextarea);
+                contentDiv.appendChild(controlsDiv);
+                trackHeader.appendChild(contentDiv);
+                
+                trackHeadersContainer.appendChild(trackHeader);
+            });
+        }
+
+        function updateTrackRowHeight(trackId) {
+            const trackHeader = document.querySelector(`.track-header[data-id="${trackId}"]`);
+            const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
+            const track = tracks.find(t => t.id === trackId);
+            
+            if (!trackHeader || !trackRow || !track) return;
+            
+            const headerTextarea = trackHeader.querySelector('.track-name');
+            const headerHeight = headerTextarea ? headerTextarea.scrollHeight + 10 : 50;
+            
+            let maxCellHeight = 50;
+            
+            const cellTextareas = trackRow.querySelectorAll('textarea');
+            cellTextareas.forEach(textarea => {
+                textarea.style.height = 'auto';
+                const calculatedHeight = textarea.scrollHeight + 8;
+                
+                if (calculatedHeight > maxCellHeight) {
+                    maxCellHeight = calculatedHeight;
+                }
+                
+                textarea.style.height = `${calculatedHeight}px`;
+            });
+            
+            const finalHeight = Math.max(headerHeight, maxCellHeight, 50);
+            
+            trackHeader.style.height = `${finalHeight}px`;
+            trackRow.style.height = `${finalHeight}px`;
+            track.height = finalHeight;
+        }
+
+        function updateTrackPlaceholders(trackId) {
+            const track = tracks.find(t => t.id === trackId);
+            if (!track) return;
+            
+            const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
+            if (!trackRow) return;
+            
+            const textareas = trackRow.querySelectorAll('textarea');
+            textareas.forEach((textarea, index) => {
+                textarea.placeholder = `Some description for ${track.name} on ${sections[index].name}...`;
+            });
+        }
+
+        function deleteTrack(trackId) {
+            const trackIndex = tracks.findIndex(t => t.id === trackId);
+            if (trackIndex === -1) return;
+            
+            const trackHeader = document.querySelector(`.track-header[data-id="${trackId}"]`);
+            const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
+            
+            if (trackHeader && trackRow) {
+                trackHeader.classList.add('removing');
+                trackRow.classList.add('removing');
+                
+                setTimeout(() => {
+                    tracks.splice(trackIndex, 1);
+                    renderTrackHeaders();
+                    renderTracks();
+                    updateScrollShadows();
+                }, 300);
+            }
+        }
+
+        function renderTracks() {
+            const tracksContainer = document.getElementById('tracksContainer');
+            tracksContainer.innerHTML = '';
+            
+            tracks.forEach(track => {
+                const trackRow = document.createElement('div');
+                trackRow.className = 'track-row';
+                trackRow.setAttribute('data-id', track.id);
+                
+                sections.forEach((section, index) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'track-cell';
+                    cell.style.backgroundColor = section.color;
+                    cell.style.width = `${section.width}px`;
+                    cell.setAttribute('data-width', section.width);
+                    
+                    const textarea = document.createElement('textarea');
+                    textarea.value = track.cells[index] || '';
+                    
+                    textarea.placeholder = `Some description for ${track.name} on ${section.name}...`;
+                    
+                    textarea.addEventListener('input', function() {
+                        track.cells[index] = this.value;
+                        
+                        updateTrackRowHeight(track.id);
+                    });
+                    
+                    cell.appendChild(textarea);
+                    trackRow.appendChild(cell);
+                });
+                
+                tracksContainer.appendChild(trackRow);
+                
+                setTimeout(() => {
+                    updateTrackRowHeight(track.id);
+                }, 0);
+            });
+        }
+    </script>
+</body>
+</html>
