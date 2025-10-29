@@ -18,16 +18,18 @@
             </div>
             <div class="header-left-bottom">
                 <div class="app-description">
-                    <p>Утилита для быстрого составления структуры трека. How to use:</p>
-                    <p>1. Добавляй секции трека (Sections). Выбери из стандартного набора или создай кастомную секцию.</p>
-                    <p>2. Добавляй дорожки трека (Lines). Название дорожки - редактируемо</p>
-                    <p>3. Для каждой дорожки укажи, что на ней звучит в той или иной секции трека</p>
+                    <p>Утилита для быстрого составления структуры трека</p>
+                    <p>How to use:</p>
+                    <p>📜 Добавляй секции трека (Sections). Выбери из стандартного набора или создай кастомную секцию</p>
+                    <p>🎼 Добавляй дорожки трека (Lines). Название дорожки - редактируемо</p>
+                    <p>🎵 Для каждой дорожки укажи, что на ней звучит в той или иной секции трека</p>
+                    <p>🔁 Секции можно перемещать по треку и изменять их параметры (название, цвет, продолжительность). Лишние секции и дорожки можно удалять</p>               
                 </div>
             </div>
         </div>
         <div class="header-right">
             <div class="settings-container">
-                <div class="settings-title">Settings</div>
+                <div class="settings-title">⚙️ Settings</div>
                 <div class="setting-item">
                     <label for="showTimeline">Show timeline:</label>
                     <input type="checkbox" id="showTimeline">
@@ -56,6 +58,17 @@
                             <option value="4" selected>4</option>
                             <option value="8">8</option>
                         </select>
+                    </div>
+                </div>
+            </div>
+            <div class="import-export-container">
+                <div class="import-export-title">💾 Import/Export track</div>
+                <div class="import-export-items">
+                    <div class="import-export-item" id="importItem">
+                        <button class="btn-primary" id="importTrack">Import track</button>
+                    </div>
+                    <div class="import-export-item" id="exportItem">
+                        <button class="btn-primary" id="exportTrack">Export track</button>
                     </div>
                 </div>
             </div>

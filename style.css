@@ -22,7 +22,8 @@
 
 body {
     min-width: 400px;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     padding: 20px;
 }
 
@@ -193,29 +194,37 @@ body {
     width: 100%;
 }
 
+.app-description p {
+    margin-bottom: 8px;
+}
+
 .header-right {
     flex-shrink: 0;
-    width: 250px; /* Фиксированная ширина для настроек */
+    width: 280px; /* Фиксированная ширина для настроек */
 }
 
 .settings-container {
     border: 1px solid var(--border-color);
-    padding: 10px;
+    padding: 10px 20px;
     width: 100%;
+    margin-bottom: 10px;
 }
 
 .settings-title {
     font-weight: bold;
+    font-size: 20px;
     margin-bottom: 10px;
 }
 
 .setting-item {
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
 }
 
 .setting-item label {
     display: inline-block;
-    width: 100px;
+    width: 120px;
 }
 
 .signature-container {
@@ -226,6 +235,30 @@ body {
 .signature-container select {
     width: 50px;
 }
+
+.import-export-container {
+    border: 1px solid var(--border-color);
+    padding: 10px 20px;
+    width: 100%;
+}
+
+.import-export-title {
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.import-export-items {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.import-export-item {
+    align-items: center;
+}
+
 
 /* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
@@ -263,7 +296,7 @@ body {
 .workspace {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 220px);
+    height: calc(100vh - 320px);
     overflow: hidden;
 }
 
@@ -463,7 +496,6 @@ body {
     width: var(--left-panel-width);
     display: flex;
     flex-direction: column;
-    border-right: 1px solid var(--border-color);
     flex-shrink: 0;
     overflow: hidden;
 }
@@ -476,6 +508,7 @@ body {
 
 .track-header {
     border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
     display: flex;
     align-items: center;
     padding: 0 5px;
