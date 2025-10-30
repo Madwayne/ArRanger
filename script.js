@@ -12,20 +12,17 @@ let sections = [];
 let tracks = [];
 let currentEditingSection = null;
 
-// Инициализация приложения
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
 });
 
 function initializeApp() {
-    // Инициализация элементов интерфейса
     initializeTrackTitle();
     initializeSettings();
     initializeStandardSections();
     initializeTimeline();
     initializeTracks();
 
-    // Добавление обработчиков событий
     document.getElementById('addSectionBtn').addEventListener('click', showAddSectionModal);
     document.getElementById('addLineBtn').addEventListener('click', addNewTrack);
     document.getElementById('customSectionBtn').addEventListener('click', showCustomSectionModal);
@@ -39,31 +36,24 @@ function initializeApp() {
     document.getElementById('editDecreaseDuration').addEventListener('click', () => changeEditDuration(-1));
     document.getElementById('editIncreaseDuration').addEventListener('click', () => changeEditDuration(1));
 
-    // Добавление начальных секций (как на макете)
     addSection({ "Name": "Intro", "Color": "#DAE8FC", "Duration": 4 });
     addSection({ "Name": "Verse", "Color": "#D5E8D4", "Duration": 8 });
     addSection({ "Name": "Chorus", "Color": "#FFE6CC", "Duration": 8 });
 
-    // Добавление начальных дорожек
     addDefaultTracks();
 
-    // Синхронизация прокрутки для новой структуры
     synchronizeScroll();
 
-    // Изначально скрываем timeline
     updateTimelineVisibility();
 
-    // Инициализация теней для скролл-контейнеров
     initializeScrollShadows();
 }
 
-// Функции синхронизации прокрутки для новой структуры
 function synchronizeScroll() {
     const fixedRightTop = document.querySelector('.fixed-right-top');
     const scrollableRightBottom = document.querySelector('.scrollable-right-bottom');
     const trackHeaders = document.getElementById('trackHeaders');
 
-    // Синхронизация горизонтальной прокрутки между верхним и нижним правыми контейнерами
     fixedRightTop.addEventListener('scroll', function () {
         scrollableRightBottom.scrollLeft = this.scrollLeft;
         updateScrollShadows();
@@ -74,7 +64,6 @@ function synchronizeScroll() {
         updateScrollShadows();
     });
 
-    // Синхронизация вертикальной прокрутки между левым и правым нижними контейнерами
     trackHeaders.addEventListener('scroll', function () {
         scrollableRightBottom.scrollTop = this.scrollTop;
         updateScrollShadows();
@@ -86,7 +75,6 @@ function synchronizeScroll() {
     });
 }
 
-// Функция для обновления видимости timeline
 function updateTimelineVisibility() {
     const showTimeline = document.getElementById('showTimeline').checked;
     const timelineHeader = document.getElementById('timelineHeader');
@@ -102,15 +90,12 @@ function updateTimelineVisibility() {
     }
 }
 
-// Функция для инициализации и обновления теней при скролле
 function initializeScrollShadows() {
     updateScrollShadows();
 
-    // Обновляем тени при изменении размера окна
     window.addEventListener('resize', updateScrollShadows);
 }
 
-// ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ОБНОВЛЕНИЯ ТЕНЕЙ
 function updateScrollShadows() {
     const containers = [
         {
@@ -135,51 +120,34 @@ function updateScrollShadows() {
 
     containers.forEach(item => {
         if (!item.element || !item.container) return;
+        
+        const scrollableToTop = item.element.scrollTop > 0;
+        const scrollableToBottom = item.element.scrollTop + item.element.clientHeight < item.element.scrollHeight - 1;
+        const scrollableToLeft = item.element.scrollLeft > 0;
+        const scrollableToRight = item.element.scrollLeft + item.element.clientWidth < item.element.scrollWidth - 1;
 
-        const isScrolledRight = item.element.scrollLeft + item.element.clientWidth < item.element.scrollWidth - 1;
-        const isScrolledBottom = item.element.scrollTop + item.element.clientHeight < item.element.scrollHeight - 1;
-        const isScrolledLeft = item.element.scrollLeft > 0;
-        const isScrolledTop = item.element.scrollTop > 0;
-
-        // Удаляем все классы теней
         const shadowClasses = [
             'shadow-top', 'shadow-bottom', 'shadow-left', 'shadow-right',
-            'shadow-top-bottom', 'shadow-left-right', 'shadow-all'
+
+            'shadow-top-bottom', 'shadow-top-left', 'shadow-top-right', 'shadow-bottom-left', 'shadow-bottom-right',
+            'shadow-top-bottom-left', 'shadow-top-bottom-right',
+            
+            'shadow-left-right', 'shadow-top-left', 'shadow-top-right', 'shadow-bottom-left', 'shadow-bottom-right',
+            'shadow-top-left-right', 'shadow-bottom-left-right',
+
+            'shadow-top-bottom-left-right'
         ];
         item.container.classList.remove(...shadowClasses);
 
-        // Определяем, какие тени нужно добавить
-        let shadows = [];
+        let shadowClass = 'shadow';
 
-        if (isScrolledTop && item.vertical) shadows.push('top');
-        if (isScrolledBottom && item.vertical) shadows.push('bottom');
-        if (isScrolledLeft && item.horizontal) shadows.push('left');
-        if (isScrolledRight && item.horizontal) shadows.push('right');
-
-        // Добавляем соответствующий класс тени
-        if (shadows.length > 0) {
-            if (shadows.length === 4) {
-                item.container.classList.add('shadow-all');
-            } else if (shadows.length === 2) {
-                if (shadows.includes('top') && shadows.includes('bottom')) {
-                    item.container.classList.add('shadow-top-bottom');
-                } else if (shadows.includes('left') && shadows.includes('right')) {
-                    item.container.classList.add('shadow-left-right');
-                } else {
-                    // Для других комбинаций просто добавляем обе тени
-                    shadows.forEach(shadow => {
-                        item.container.classList.add(`shadow-${shadow}`);
-                    });
-                }
-            } else if (shadows.length === 1) {
-                item.container.classList.add(`shadow-${shadows[0]}`);
-            } else if (shadows.length === 3) {
-                // Для трех теней используем комбинацию
-                shadows.forEach(shadow => {
-                    item.container.classList.add(`shadow-${shadow}`);
-                });
-            }
-        }
+        if (scrollableToTop) shadowClass += '-top';
+        if (scrollableToBottom) shadowClass += "-bottom";
+        if (scrollableToLeft) shadowClass += "-left";
+        if (scrollableToRight) shadowClass += "-right";
+        
+        if (scrollableToTop || scrollableToBottom || scrollableToLeft || scrollableToRight)
+        item.container.classList.add(shadowClass);
     });
 }
 
@@ -238,7 +206,6 @@ function initializeSettings() {
         updateTimelineVisibility();
     });
 
-    // Изначально скрываем timeline
     updateTimelineVisibility();
 }
 
@@ -616,7 +583,6 @@ function addNewTrack() {
     tracks.push(track);
     renderTrackHeaders();
     renderTracks();
-    updateScrollShadows();
 }
 
 function renderTrackHeaders() {
@@ -677,6 +643,8 @@ function renderTrackHeaders() {
 
         trackHeadersContainer.appendChild(trackHeader);
     });
+
+    updateScrollShadows();
 }
 
 function updateTrackRowHeight(trackId) {
@@ -708,6 +676,8 @@ function updateTrackRowHeight(trackId) {
     trackHeader.style.height = `${finalHeight}px`;
     trackRow.style.height = `${finalHeight}px`;
     track.height = finalHeight;
+
+    updateScrollShadows();
 }
 
 function updateTrackPlaceholders(trackId) {
@@ -780,4 +750,6 @@ function renderTracks() {
             updateTrackRowHeight(track.id);
         }, 0);
     });
+
+    updateScrollShadows();
 }

@@ -58,7 +58,7 @@ body {
 }
 
 .shadow-container.shadow-top::after {
-    box-shadow: inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3);
     opacity: 1;
 }
 
@@ -79,21 +79,97 @@ body {
 
 .shadow-container.shadow-top-bottom::after {
     box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
-        inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3);
+                inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-top-left::after {
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-top-right::after {
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-bottom-left::after {
+    box-shadow: inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-bottom-right::after {
+    box-shadow: inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-top-bottom-left::after {
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-top-bottom-right::after {
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
     opacity: 1;
 }
 
 .shadow-container.shadow-left-right::after {
     box-shadow: inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3),
-        inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
     opacity: 1;
 }
 
-.shadow-container.shadow-all::after {
+.shadow-container.shadow-top-left::after {
     box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
-        inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
-        inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3),
-        inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-top-right::after {
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-bottom-left::after {
+    box-shadow: inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-bottom-right::after {
+    box-shadow: inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-top-left-right::after {
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-bottom-left-right::after {
+    box-shadow: inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
+    opacity: 1;
+}
+
+.shadow-container.shadow-top-bottom-left-right::after {
+    box-shadow: inset 0px 10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 0px -10px 10px -5px rgba(0, 0, 0, 0.3),
+                inset 10px 0px 10px -5px rgba(0, 0, 0, 0.3),
+                inset -10px 0px 10px -5px rgba(0, 0, 0, 0.3);
     opacity: 1;
 }
 
@@ -305,6 +381,8 @@ body {
     height: auto;
     flex-shrink: 0;
     overflow: hidden;
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
 }
 
 .fixed-left-top {
@@ -498,6 +576,7 @@ body {
     flex-direction: column;
     flex-shrink: 0;
     overflow: hidden;
+    height: auto;
 }
 
 .track-headers-container {
@@ -616,6 +695,7 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    height: auto;
 }
 
 .scrollable-right-bottom {
