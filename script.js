@@ -11,6 +11,9 @@ const standardSections = [
 let sections = [];
 let tracks = [];
 let currentEditingSection = null;
+let currentEditingTrack = null;
+let draggedTrack = null;
+let dragOverTrack = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
@@ -35,6 +38,9 @@ function initializeApp() {
     document.getElementById('increaseDuration').addEventListener('click', () => changeDuration(1));
     document.getElementById('editDecreaseDuration').addEventListener('click', () => changeEditDuration(-1));
     document.getElementById('editIncreaseDuration').addEventListener('click', () => changeEditDuration(1));
+    document.getElementById('exportTrack').addEventListener('click', exportTrack);
+    document.getElementById('closeEditTrackModal').addEventListener('click', closeEditTrackModal);
+    document.getElementById('applyTrackChanges').addEventListener('click', applyTrackChanges);
 
     addSection({ "Name": "Intro", "Color": "#DAE8FC", "Duration": 4 });
     addSection({ "Name": "Verse", "Color": "#D5E8D4", "Duration": 8 });
@@ -261,16 +267,17 @@ function initializeTracks() {
 
 function addDefaultTracks() {
     const defaultTracks = [
-        { name: "Drums", height: 50 },
-        { name: "Guitar", height: 50 },
-        { name: "Bass", height: 50 },
-        { name: "Voice", height: 50 }
+        { name: "Drums", sound: "Kick", height: 50 },
+        { name: "Guitar", sound: "Guitar", height: 50 },
+        { name: "Bass", sound: "Bass", height: 50 },
+        { name: "Voice", sound: "Vocals", height: 50 }
     ];
 
     defaultTracks.forEach(trackData => {
         const track = {
             id: Date.now() + Math.random(),
             name: trackData.name,
+            sound: trackData.sound,
             height: trackData.height,
             cells: []
         };
@@ -362,13 +369,25 @@ function renderSections() {
     const sectionsRow = document.getElementById('sectionsRow');
     sectionsRow.innerHTML = '';
 
-    sections.forEach(section => {
+    sections.forEach((section, index) => {
         const sectionElement = document.createElement('div');
         sectionElement.className = 'section';
         sectionElement.style.backgroundColor = section.color;
         sectionElement.style.width = `${section.width}px`;
         sectionElement.setAttribute('data-id', section.id);
         sectionElement.setAttribute('data-width', section.width);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'section-content';
+
+        const sectionNumber = document.createElement('div');
+        sectionNumber.className = 'section-number';
+        sectionNumber.textContent = index + 1;
+
+        sectionElement.appendChild(sectionNumber);
+
+        const sectionInfo = document.createElement('div');
+        sectionInfo.className = 'section-info';
 
         const nameElement = document.createElement('div');
         nameElement.className = 'section-name';
@@ -378,8 +397,8 @@ function renderSections() {
         durationElement.className = 'section-duration';
         durationElement.textContent = `Bars: ${section.duration}`;
 
-        sectionElement.appendChild(nameElement);
-        sectionElement.appendChild(durationElement);
+        sectionInfo.appendChild(nameElement);
+        sectionInfo.appendChild(durationElement);
 
         const sectionControls = document.createElement('div');
         sectionControls.className = 'section-controls';
@@ -402,7 +421,9 @@ function renderSections() {
 
         sectionControls.appendChild(editBtn);
         sectionControls.appendChild(deleteBtn);
-        sectionElement.appendChild(sectionControls);
+        contentDiv.appendChild(sectionInfo);
+        contentDiv.appendChild(sectionControls);
+        sectionElement.appendChild(contentDiv);
 
         sectionElement.setAttribute('draggable', 'true');
         sectionElement.addEventListener('dragstart', function (e) {
@@ -576,6 +597,7 @@ function addNewTrack() {
     const track = {
         id: Date.now() + Math.random(),
         name: 'New line',
+        sound: '',
         height: 50,
         cells: Array(sections.length).fill('')
     };
@@ -593,6 +615,7 @@ function renderTrackHeaders() {
         const trackHeader = document.createElement('div');
         trackHeader.className = 'track-header';
         trackHeader.setAttribute('data-id', track.id);
+        trackHeader.setAttribute('draggable', 'true');
 
         const contentDiv = document.createElement('div');
         contentDiv.className = 'track-header-content';
@@ -603,30 +626,30 @@ function renderTrackHeaders() {
 
         trackHeader.appendChild(trackNumber);
 
-        const nameTextarea = document.createElement('textarea');
-        nameTextarea.className = 'track-name';
-        nameTextarea.value = track.name;
+        const trackInfo = document.createElement('div');
+        trackInfo.className = 'track-info';
 
-        nameTextarea.addEventListener('input', function () {
-            track.name = this.value;
+        const nameElement = document.createElement('div');
+        nameElement.className = 'track-name-display';
+        nameElement.textContent = track.name;
 
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
+        const soundElement = document.createElement('div');
+        soundElement.className = 'track-sound';
+        soundElement.textContent = track.sound || '-';
 
-            updateTrackRowHeight(track.id);
-
-            updateTrackPlaceholders(track.id);
-        });
-
-        setTimeout(() => {
-            nameTextarea.style.height = 'auto';
-            nameTextarea.style.height = nameTextarea.scrollHeight + 'px';
-
-            updateTrackRowHeight(track.id);
-        }, 0);
+        trackInfo.appendChild(nameElement);
+        trackInfo.appendChild(soundElement);
 
         const controlsDiv = document.createElement('div');
         controlsDiv.className = 'track-controls';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'edit-track-btn';
+        editBtn.textContent = '✏️';
+        editBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            showEditTrackModal(track);
+        });
 
         const deleteBtn = document.createElement('button');
         deleteBtn.className = 'delete-track-btn';
@@ -636,15 +659,113 @@ function renderTrackHeaders() {
             deleteTrack(track.id);
         });
 
+        controlsDiv.appendChild(editBtn);
         controlsDiv.appendChild(deleteBtn);
-        contentDiv.appendChild(nameTextarea);
+        contentDiv.appendChild(trackInfo);
         contentDiv.appendChild(controlsDiv);
         trackHeader.appendChild(contentDiv);
+
+        trackHeader.addEventListener('dragstart', handleTrackDragStart);
+        trackHeader.addEventListener('dragover', handleTrackDragOver);
+        trackHeader.addEventListener('dragleave', handleTrackDragLeave);
+        trackHeader.addEventListener('drop', handleTrackDrop);
+        trackHeader.addEventListener('dragend', handleTrackDragEnd);
 
         trackHeadersContainer.appendChild(trackHeader);
     });
 
     updateScrollShadows();
+}
+
+function handleTrackDragStart(e) {
+    draggedTrack = e.currentTarget;
+    e.currentTarget.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', e.currentTarget.getAttribute('data-id'));
+    
+    document.querySelectorAll('.track-header').forEach(header => {
+        if (header !== draggedTrack) {
+            header.classList.add('drag-possible');
+        }
+    });
+}
+
+function handleTrackDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    const trackHeader = e.currentTarget;
+    if (trackHeader !== draggedTrack && !trackHeader.classList.contains('drag-over')) {
+        trackHeader.classList.add('drag-over');
+        dragOverTrack = trackHeader;
+    }
+}
+
+function handleTrackDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleTrackDrop(e) {
+    e.preventDefault();
+    
+    const draggedTrackId = e.dataTransfer.getData('text/plain');
+    const targetTrackId = e.currentTarget.getAttribute('data-id');
+    
+    if (draggedTrackId !== targetTrackId) {
+        moveTrack(draggedTrackId, targetTrackId);
+    }
+    
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleTrackDragEnd(e) {
+    document.querySelectorAll('.track-header').forEach(header => {
+        header.classList.remove('dragging', 'drag-over', 'drag-possible');
+    });
+    
+    draggedTrack = null;
+    dragOverTrack = null;
+}
+
+function moveTrack(draggedTrackId, targetTrackId) {
+    const draggedIndex = tracks.findIndex(t => t.id.toString() === draggedTrackId.toString());
+    const targetIndex = tracks.findIndex(t => t.id.toString() === targetTrackId.toString());
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    const [draggedTrack] = tracks.splice(draggedIndex, 1);
+    tracks.splice(targetIndex, 0, draggedTrack);
+
+    renderTrackHeaders();
+    renderTracks();
+}
+
+function showEditTrackModal(track) {
+    currentEditingTrack = track;
+
+    document.getElementById('editTrackName').value = track.name;
+    document.getElementById('editTrackSound').value = track.sound || '';
+
+    document.getElementById('editTrackModal').style.display = 'flex';
+}
+
+function closeEditTrackModal() {
+    document.getElementById('editTrackModal').style.display = 'none';
+    currentEditingTrack = null;
+}
+
+function applyTrackChanges() {
+    if (!currentEditingTrack) return;
+
+    const name = document.getElementById('editTrackName').value;
+    const sound = document.getElementById('editTrackSound').value;
+
+    currentEditingTrack.name = name;
+    currentEditingTrack.sound = sound;
+
+    renderTrackHeaders();
+    renderTracks();
+    closeEditTrackModal();
 }
 
 function updateTrackRowHeight(trackId) {
@@ -654,8 +775,7 @@ function updateTrackRowHeight(trackId) {
 
     if (!trackHeader || !trackRow || !track) return;
 
-    const headerTextarea = trackHeader.querySelector('.track-name');
-    const headerHeight = headerTextarea ? headerTextarea.scrollHeight + 10 : 50;
+    const headerHeight = trackHeader.scrollHeight;
 
     let maxCellHeight = 50;
 
@@ -752,4 +872,63 @@ function renderTracks() {
     });
 
     updateScrollShadows();
+}
+
+function exportTrack() {
+    const trackTitleElement = document.getElementById('trackTitle');
+    let trackName = 'New track';
+    
+    if (trackTitleElement) {
+        const span = trackTitleElement.querySelector('span');
+        if (span) {
+            trackName = span.textContent;
+        } else {
+            const input = trackTitleElement.querySelector('input');
+            if (input) {
+                trackName = input.value;
+            }
+        }
+    }
+
+    // Создаем массив описаний в нужном формате
+    const descriptions = [];
+    
+    tracks.forEach((track, trackIndex) => {
+        sections.forEach((section, sectionIndex) => {
+            const description = track.cells[sectionIndex] || '';
+            if (description.trim() !== '') {
+                descriptions.push({
+                    sectionNumber: sectionIndex + 1,
+                    trackNumber: trackIndex + 1,
+                    description: description
+                });
+            }
+        });
+    });
+
+    const exportData = {
+        sections: sections.map((section, index) => ({
+            Number: index + 1,
+            Name: section.name,
+            Duration: section.duration,
+            Color: section.color
+        })),
+        tracks: tracks.map((track, index) => ({
+            Number: index + 1,
+            Name: track.name,
+            Sound: track.sound
+        })),
+        Descriptions: descriptions
+    };
+
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `${trackName}_structure.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
 }

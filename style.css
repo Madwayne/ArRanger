@@ -27,7 +27,6 @@ body {
     padding: 20px;
 }
 
-/* Стили для скрытия scrollbar'ов */
 .scrollable {
     -ms-overflow-style: none;
     scrollbar-width: none;
@@ -173,14 +172,6 @@ body {
     opacity: 1;
 }
 
-/* Увеличиваем z-index для секций и ячеек, чтобы они были под тенями */
-.section,
-.track-cell {
-    position: relative;
-    z-index: 1;
-}
-
-/* Шапка приложения - НОВАЯ СТРУКТУРА */
 .app-header {
     width: 100%;
     padding: 10px;
@@ -223,7 +214,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex: 1; /* Плавающая ширина */
+    flex: 1;
 }
 
 .track-title:hover {
@@ -335,8 +326,6 @@ body {
     align-items: center;
 }
 
-
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
     .app-header {
         flex-direction: column;
@@ -449,18 +438,38 @@ body {
 }
 
 .section {
+    border-right: 1px solid var(--border-color);
     height: 100%;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    padding: 2px;
+    flex-shrink: 0;
     position: relative;
-    border-right: 1px solid var(--border-color);
     cursor: move;
     user-select: none;
-    flex-shrink: 0;
-    padding: 2px;
     transition: width 0.3s ease, opacity 0.3s ease;
+    padding: 0 5px;
+}
+
+.section-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    position: relative;
+}
+
+.section-number {
+    display: flex;
+    font-size: 12px;
+    color: #888;
+    height: 100%;
+    padding-top: 3px;
+}
+
+.section-info {
+    flex: 1;
+    justify-items: center;
 }
 
 .section-name {
@@ -469,19 +478,20 @@ body {
 }
 
 .section-duration {
-    font-size: 10px;
+    font-size: 12px;
     color: #666;
 }
 
-.section:hover .section-controls {
+.section-controls {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
 }
 
-.section-controls {
-    position: absolute;
-    right: 1px;
-    display: none;
-    flex-direction: column;
+.section:hover .section-controls {
+    opacity: 1;
 }
 
 .bar {
@@ -594,6 +604,21 @@ body {
     flex-shrink: 0;
     position: relative;
     min-height: 50px;
+    cursor: move;
+    transition: background-color 0.2s ease;
+}
+
+.track-header.dragging {
+    opacity: 0.5;
+    background-color: var(--hover-color);
+}
+
+.track-header.drag-possible {
+    background-color: rgba(74, 111, 165, 0.05);
+}
+
+.track-header.drag-over {
+    background-color: rgba(74, 111, 165, 0.1);
 }
 
 .track-header-content {
@@ -606,41 +631,36 @@ body {
 }
 
 .track-number {
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    font-size: 10px;
+    display: flex;
+    font-size: 12px;
     color: #888;
-    z-index: 1;
+    height: 100%;
+    padding-top: 5px;
 }
 
-.track-name {
+.track-info {
     flex: 1;
-    cursor: text;
-    padding: 2px 4px;
-    border: none;
-    border-radius: 3px;
-    resize: none;
-    overflow: hidden;
-    font-size: 12px;
-    line-height: 1.2;
-    min-height: 20px;
-    max-width: calc(100% - 30px);
     margin-right: 5px;
-    margin-left: 15px;
+    margin-left: 10px;
+}
+
+.track-name-display {
     font-weight: bold;
-    background: transparent;
-    outline: none;
-    white-space: normal;
-    word-wrap: break-word;
-    height: auto;
+    font-size: 14px;
+}
+
+.track-sound {
+    font-size: 12px;
+    color: #888;
 }
 
 .track-controls {
     display: flex;
+    flex-direction: column;
     align-items: center;
     opacity: 0;
     transition: opacity 0.2s ease;
+    gap: 2px;
 }
 
 .track-header:hover .track-controls {
@@ -648,13 +668,15 @@ body {
 }
 
 .delete-track-btn,
+.edit-track-btn,
 .add-btn,
 .section-control,
 .edit-btn {
     font-size: 10px;
 }
 
-.delete-track-btn {
+.delete-track-btn,
+.edit-track-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -668,7 +690,8 @@ body {
     transition: background-color 0.2s ease;
 }
 
-.delete-track-btn:hover {
+.delete-track-btn:hover,
+.edit-track-btn:hover {
     background-color: rgba(74, 111, 165, 0.1);
 }
 
@@ -709,6 +732,20 @@ body {
     min-width: min-content;
     min-height: 50px;
     transition: height 0.3s ease;
+}
+
+.track-row.dragging {
+    opacity: 0.5;
+    background-color: var(--hover-color);
+}
+
+.track-row.drag-possible {
+    background-color: rgba(74, 111, 165, 0.05);
+}
+
+.track-row.drag-over {
+    background-color: rgba(74, 111, 165, 0.1);
+    border-top: 2px solid var(--primary-color);
 }
 
 .track-cell {
@@ -828,19 +865,6 @@ body {
     height: 20px;
     border-radius: 3px;
     margin-right: 10px;
-}
-
-.section-info {
-    flex: 1;
-}
-
-.section-name {
-    font-weight: bold;
-}
-
-.section-duration {
-    font-size: 12px;
-    color: #666;
 }
 
 .section-add-btn {
