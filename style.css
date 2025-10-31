@@ -771,6 +771,7 @@ body {
     line-height: 1.4;
     padding: 4px;
     overflow: hidden;
+    direction: ltr;
 }
 
 .track-cell textarea::placeholder {
