@@ -541,6 +541,14 @@ body {
     transform: translateX(-50%);
 }
 
+.timeline-label:nth-child(2) {
+    transform: translateX(10%);
+}
+
+.timeline-label:nth-last-child(2) {
+    transform: translateX(-100%);
+}
+
 .workspace-separator {
     height: 20px;
     width: 100%;
