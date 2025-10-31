@@ -41,6 +41,8 @@ function initializeApp() {
     document.getElementById('exportTrack').addEventListener('click', exportTrack);
     document.getElementById('closeEditTrackModal').addEventListener('click', closeEditTrackModal);
     document.getElementById('applyTrackChanges').addEventListener('click', applyTrackChanges);
+    document.getElementById('importTrack').addEventListener('click', triggerImport);
+    document.getElementById('importFileInput').addEventListener('change', handleFileImport);
 
     addSection({ "Name": "Intro", "Color": "#DAE8FC", "Duration": 4 });
     addSection({ "Name": "Verse", "Color": "#D5E8D4", "Duration": 8 });
@@ -147,10 +149,10 @@ function updateScrollShadows() {
 
         let shadowClass = 'shadow';
 
-        if (scrollableToTop) shadowClass += '-top';
-        if (scrollableToBottom) shadowClass += "-bottom";
-        if (scrollableToLeft) shadowClass += "-left";
-        if (scrollableToRight) shadowClass += "-right";
+        if (scrollableToTop && item.vertical) shadowClass += '-top';
+        if (scrollableToBottom && item.vertical) shadowClass += "-bottom";
+        if (scrollableToLeft && item.horizontal) shadowClass += "-left";
+        if (scrollableToRight && item.horizontal) shadowClass += "-right";
         
         if (scrollableToTop || scrollableToBottom || scrollableToLeft || scrollableToRight)
         item.container.classList.add(shadowClass);
@@ -908,17 +910,17 @@ function exportTrack() {
 
     const exportData = {
         sections: sections.map((section, index) => ({
-            Number: index + 1,
-            Name: section.name,
-            Duration: section.duration,
-            Color: section.color
+            number: index + 1,
+            name: section.name,
+            duration: section.duration,
+            color: section.color
         })),
         tracks: tracks.map((track, index) => ({
-            Number: index + 1,
-            Name: track.name,
-            Sound: track.sound
+            number: index + 1,
+            name: track.name,
+            sound: track.sound
         })),
-        Descriptions: descriptions
+        descriptions: descriptions
     };
 
     const dataStr = JSON.stringify(exportData, null, 2);
@@ -931,4 +933,175 @@ function exportTrack() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
+}
+
+function triggerImport() {
+    document.getElementById('importFileInput').click();
+}
+
+function handleFileImport(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            importTrackData(data, file.name);
+        } catch (error) {
+            alert('Error reading file: ' + error.message);
+        }
+    };
+    reader.readAsText(file);
+    
+    // Сброс значения input
+    event.target.value = '';
+}
+
+function importTrackData(data, fileName) {
+    // Валидация структуры
+    const validation = validateImportData(data);
+    if (!validation.isValid) {
+        alert(validation.message);
+        return;
+    }
+    
+    // Применение данных
+    applyImportedData(data);
+    
+    alert(`File '${fileName}' imported successfully`);
+}
+
+function validateImportData(data) {
+    const missingAttributes = [];
+    const invalidAttributes = [];
+    
+    // Проверка корневых атрибутов
+    if (!data.sections) missingAttributes.push('sections');
+    if (!data.tracks) missingAttributes.push('tracks');
+    if (!data.descriptions) missingAttributes.push('descriptions');
+    
+    if (missingAttributes.length > 0) {
+        return {
+            isValid: false,
+            message: `Invalid file structure. Missed required attribute(-s): ${missingAttributes.join(', ')}`
+        };
+    }
+    
+    // Валидация секций
+    if (Array.isArray(data.sections)) {
+        data.sections.forEach((section, index) => {
+            const path = `sections[${index}]`;
+            
+            if (typeof section.number !== 'number' || !Number.isInteger(section.number) || section.number <= 0) {
+                invalidAttributes.push(`${path}.number`);
+            }
+            if (typeof section.name !== 'string') {
+                invalidAttributes.push(`${path}.name`);
+            }
+            if (typeof section.duration !== 'number' || !Number.isInteger(section.duration) || section.duration <= 0 || section.duration >= 65) {
+                invalidAttributes.push(`${path}.duration`);
+            }
+            if (typeof section.color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(section.color)) {
+                invalidAttributes.push(`${path}.color`);
+            }
+        });
+    } else {
+        invalidAttributes.push('sections (should be array)');
+    }
+    
+    // Валидация дорожек
+    if (Array.isArray(data.tracks)) {
+        data.tracks.forEach((track, index) => {
+            const path = `tracks[${index}]`;
+            
+            if (typeof track.number !== 'number' || !Number.isInteger(track.number) || track.number <= 0) {
+                invalidAttributes.push(`${path}.number`);
+            }
+            if (typeof track.name !== 'string') {
+                invalidAttributes.push(`${path}.name`);
+            }
+            if (typeof track.sound !== 'string') {
+                invalidAttributes.push(`${path}.sound`);
+            }
+        });
+    } else {
+        invalidAttributes.push('tracks (should be array)');
+    }
+    
+    // Валидация описаний
+    if (Array.isArray(data.descriptions)) {
+        data.descriptions.forEach((desc, index) => {
+            const path = `descriptions[${index}]`;
+            
+            if (typeof desc.sectionNumber !== 'number' || !Number.isInteger(desc.sectionNumber) || desc.sectionNumber <= 0) {
+                invalidAttributes.push(`${path}.sectionNumber`);
+            }
+            if (typeof desc.trackNumber !== 'number' || !Number.isInteger(desc.trackNumber) || desc.trackNumber <= 0) {
+                invalidAttributes.push(`${path}.trackNumber`);
+            }
+            if (typeof desc.description !== 'string') {
+                invalidAttributes.push(`${path}.description`);
+            }
+        });
+    } else {
+        invalidAttributes.push('descriptions (should be array)');
+    }
+    
+    if (invalidAttributes.length > 0) {
+        return {
+            isValid: false,
+            message: `Invalid value for attribute(-s): ${invalidAttributes.join(', ')}`
+        };
+    }
+    
+    return { isValid: true };
+}
+
+function applyImportedData(data) {
+    // Очистка текущих данных
+    sections = [];
+    tracks = [];
+    
+    // Сортировка и импорт секций
+    const sortedSections = data.sections.sort((a, b) => a.number - b.number);
+    sortedSections.forEach(section => {
+        addSection({
+            Name: section.name,
+            Color: section.color,
+            Duration: section.duration
+        });
+    });
+    
+    // Сортировка и импорт дорожек
+    const sortedTracks = data.tracks.sort((a, b) => a.number - b.number);
+    sortedTracks.forEach(trackData => {
+        const track = {
+            id: Date.now() + Math.random(),
+            name: trackData.name,
+            sound: trackData.sound,
+            height: 50,
+            cells: Array(sections.length).fill('')
+        };
+        tracks.push(track);
+    });
+    
+    // Импорт описаний
+    data.descriptions.forEach(desc => {
+        const sectionIndex = desc.sectionNumber - 1;
+        const trackIndex = desc.trackNumber - 1;
+        
+        if (sectionIndex >= 0 && sectionIndex < sections.length && 
+            trackIndex >= 0 && trackIndex < tracks.length) {
+            tracks[trackIndex].cells[sectionIndex] = desc.description;
+        }
+    });
+    
+    // Обновление интерфейса
+    renderSections();
+    updateBars();
+    updateTimeline();
+    renderTrackHeaders();
+    renderTracks();
+    updateScrollShadows();
 }

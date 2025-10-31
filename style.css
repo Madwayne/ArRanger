@@ -488,6 +488,8 @@ body {
     align-items: center;
     opacity: 0;
     transition: opacity 0.2s ease;
+    position: absolute;
+    right: 2px;
 }
 
 .section:hover .section-controls {
@@ -661,6 +663,8 @@ body {
     opacity: 0;
     transition: opacity 0.2s ease;
     gap: 2px;
+    position: absolute;
+    right: 2px;
 }
 
 .track-header:hover .track-controls {
@@ -949,4 +953,13 @@ body {
     height: 30px;
     padding: 5px 10px;
     cursor: pointer;
+}
+
+#importFileInput {
+    display: none;
+}
+
+.btn-primary:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
 }
