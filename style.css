@@ -3,14 +3,14 @@
     --border-color: #ccc;
     --hover-color: #f0f0f0;
     --header-bg: #f9f9f9;
-    --section-height: 40px;
+    --section-height: 60px;
     --bar-height: 30px;
     --timeline-height: 30px;
     --line-height: 50px;
     --header-height: 100px;
     --button-color: #4a6fa5;
     --top-panel-height: calc(var(--section-height) + var(--bar-height) + var(--timeline-height));
-    --left-panel-width: 100px;
+    --left-panel-width: 150px;
 }
 
 * {
@@ -477,6 +477,11 @@ body {
     font-size: 14px;
 }
 
+.section-comment {
+    font-size: 12px;
+    color: #666;
+}
+
 .section-duration {
     font-size: 12px;
     color: #666;
@@ -657,6 +662,11 @@ body {
 .track-name-display {
     font-weight: bold;
     font-size: 14px;
+}
+
+.track-comment {
+    font-size: 12px;
+    color: #888;
 }
 
 .track-sound {
@@ -909,7 +919,8 @@ body {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
     width: 100%;
     padding: 5px;
 }
@@ -971,4 +982,41 @@ body {
 .btn-primary:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
+}
+
+.lines-header-and-reset-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.lines-header-container {
+    margin-bottom: 0;
+    flex-shrink: 0;
+}
+
+#resetTrackBtn {
+    flex-shrink: 0;
+    margin-right: 0;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--button-color);
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+    font-size: 10px;
+}
+
+.copy-btn:hover {
+    background-color: rgba(74, 111, 165, 0.1);
 }

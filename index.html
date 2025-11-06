@@ -62,7 +62,7 @@
                 </div>
             </div>
             <div class="import-export-container">
-                <div class="import-export-title">💾 Import/Export track</div>
+                <div class="import-export-title">💾 Import/Export</div>
                 <div class="import-export-items">
                     <div class="import-export-item" id="importItem">
                         <button class="btn-primary" id="importTrack">Import track</button>
@@ -107,11 +107,14 @@
             <div class="separator-line"></div>
         </div>
         
-        <div class="lines-header-container">
-            <div class="lines-header-content">
-                <span>Lines</span>
-                <button class="add-btn" id="addLineBtn">+</button>
+        <div class="lines-header-and-reset-container">
+            <div class="lines-header-container">
+                <div class="lines-header-content">
+                    <span>Lines</span>
+                    <button class="add-btn" id="addLineBtn">+</button>
+                </div>
             </div>
+            <button class="btn-primary" id="resetTrackBtn">Reset track</button>
         </div>
         
         <div class="workspace-bottom">
@@ -156,6 +159,10 @@
                 </div>
             </div>
             <div class="form-group">
+                <label for="sectionComment">Comment:</label>
+                <textarea id="sectionComment" placeholder="Enter section comment"></textarea>
+            </div>
+            <div class="form-group">
                 <label for="sectionDuration">Duration:</label>
                 <div class="duration-controls">
                     <button id="decreaseDuration">-</button>
@@ -186,6 +193,10 @@
                 </div>
             </div>
             <div class="form-group">
+                <label for="editSectionComment">Comment:</label>
+                <textarea id="editSectionComment" placeholder="Enter section comment"></textarea>
+            </div>
+            <div class="form-group">
                 <label for="editSectionDuration">Duration:</label>
                 <div class="duration-controls">
                     <button id="editDecreaseDuration">-</button>
@@ -208,6 +219,10 @@
             <div class="form-group">
                 <label for="editTrackName">Line name:</label>
                 <input type="text" id="editTrackName" placeholder="Enter line name">
+            </div>
+            <div class="form-group">
+                <label for="editTrackComment">Comment:</label>
+                <textarea id="editTrackComment" placeholder="Enter line comment"></textarea>
             </div>
             <div class="form-group">
                 <label for="editTrackSound">Sound:</label>
