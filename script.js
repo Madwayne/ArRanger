@@ -413,11 +413,11 @@ function renderSections() {
         sectionInfo.appendChild(commentElement);
         sectionInfo.appendChild(durationElement);
 
-        const sectionControls = document.createElement('div');
-        sectionControls.className = 'section-controls';
+        const sectionControlsContainer = document.createElement('div');
+        sectionControlsContainer.className = 'section-controls-container';
 
         const editBtn = document.createElement('button');
-        editBtn.className = 'section-control';
+        editBtn.className = 'control-btn';
         editBtn.textContent = '✏️';
         editBtn.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -425,7 +425,7 @@ function renderSections() {
         });
 
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'section-control copy-btn';
+        copyBtn.className = 'control-btn';
         copyBtn.textContent = '📄';
         copyBtn.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -433,18 +433,18 @@ function renderSections() {
         });
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'section-control';
+        deleteBtn.className = 'control-btn';
         deleteBtn.textContent = '🗑️';
         deleteBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             deleteSection(section.id);
         });
 
-        sectionControls.appendChild(editBtn);
-        sectionControls.appendChild(copyBtn);
-        sectionControls.appendChild(deleteBtn);
+        sectionControlsContainer.appendChild(editBtn);
+        sectionControlsContainer.appendChild(copyBtn);
+        sectionControlsContainer.appendChild(deleteBtn);
         contentDiv.appendChild(sectionInfo);
-        contentDiv.appendChild(sectionControls);
+        sectionElement.appendChild(sectionControlsContainer);
         sectionElement.appendChild(contentDiv);
 
         sectionElement.setAttribute('draggable', 'true');
@@ -671,11 +671,11 @@ function renderTrackHeaders() {
         trackInfo.appendChild(commentElement);
         trackInfo.appendChild(soundElement);
 
-        const controlsDiv = document.createElement('div');
-        controlsDiv.className = 'track-controls';
+        const trackControlsContainer = document.createElement('div');
+        trackControlsContainer.className = 'track-controls-container';
 
         const editBtn = document.createElement('button');
-        editBtn.className = 'edit-track-btn';
+        editBtn.className = 'control-btn';
         editBtn.textContent = '✏️';
         editBtn.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -683,7 +683,7 @@ function renderTrackHeaders() {
         });
 
         const copyBtn = document.createElement('button');
-        copyBtn.className = 'copy-btn';
+        copyBtn.className = 'control-btn';
         copyBtn.textContent = '📄';
         copyBtn.addEventListener('click', function (e) {
             e.stopPropagation();
@@ -691,18 +691,18 @@ function renderTrackHeaders() {
         });
 
         const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-track-btn';
+        deleteBtn.className = 'control-btn';
         deleteBtn.textContent = '🗑️';
         deleteBtn.addEventListener('click', function (e) {
             e.stopPropagation();
             deleteTrack(track.id);
         });
 
-        controlsDiv.appendChild(editBtn);
-        controlsDiv.appendChild(copyBtn);
-        controlsDiv.appendChild(deleteBtn);
+        trackControlsContainer.appendChild(editBtn);
+        trackControlsContainer.appendChild(copyBtn);
+        trackControlsContainer.appendChild(deleteBtn);
         contentDiv.appendChild(trackInfo);
-        contentDiv.appendChild(controlsDiv);
+        trackHeader.appendChild(trackControlsContainer);
         trackHeader.appendChild(contentDiv);
 
         trackHeader.addEventListener('dragstart', handleTrackDragStart);
@@ -818,27 +818,39 @@ function updateTrackRowHeight(trackId) {
 
     if (!trackHeader || !trackRow || !track) return;
 
+    // Сбрасываем высоту строки и заголовка к автоматической для перерасчета
+    trackHeader.style.height = 'auto';
+    trackRow.style.height = 'auto';
+
+    // Получаем естественную высоту заголовка
     const headerHeight = trackHeader.scrollHeight;
 
-    let maxCellHeight = 50;
+    let maxCellHeight = 0;
 
     const cellTextareas = trackRow.querySelectorAll('textarea');
     cellTextareas.forEach(textarea => {
         textarea.style.height = 'auto';
-        const calculatedHeight = textarea.scrollHeight + 8;
-
+        const textareaScrollHeight = textarea.scrollHeight;
+        
+        const calculatedHeight = Math.max(textareaScrollHeight, 20);
+        
         if (calculatedHeight > maxCellHeight) {
             maxCellHeight = calculatedHeight;
         }
-
-        textarea.style.height = `${calculatedHeight}px`;
+        
+        if (parseInt(textarea.style.height) !== calculatedHeight) {
+            textarea.style.height = `${calculatedHeight}px`;
+        }
     });
 
-    const finalHeight = Math.max(headerHeight, maxCellHeight, 50);
+    const cellPadding = 10;
+    const finalHeight = Math.max(headerHeight, maxCellHeight + cellPadding, 50);
 
-    trackHeader.style.height = `${finalHeight}px`;
-    trackRow.style.height = `${finalHeight}px`;
-    track.height = finalHeight;
+    if (parseInt(trackHeader.style.height) !== finalHeight) {
+        trackHeader.style.height = `${finalHeight}px`;
+        trackRow.style.height = `${finalHeight}px`;
+        track.height = finalHeight;
+    }
 
     updateScrollShadows();
 }
@@ -950,6 +962,12 @@ function exportTrack() {
     });
 
     const exportData = {
+        settings: {
+            showTimeline: document.getElementById('showTimeline').checked,
+            bpm: parseInt(document.getElementById('bpm').value),
+            signatureNumerator: parseInt(document.getElementById('signatureTop').value),
+            signatureDenominator: parseInt(document.getElementById('signatureBottom').value)
+        },
         sections: sections.map((section, index) => ({
             number: index + 1,
             name: section.name,
@@ -1026,6 +1044,7 @@ function validateImportData(data) {
     const invalidAttributes = [];
 
     // Проверка корневых атрибутов
+    if (!data.settings) missingAttributes.push('settings');
     if (!data.sections) missingAttributes.push('sections');
     if (!data.tracks) missingAttributes.push('tracks');
     if (!data.descriptions) missingAttributes.push('descriptions');
@@ -1035,6 +1054,35 @@ function validateImportData(data) {
             isValid: false,
             message: `Invalid file structure. Missed required attribute(-s): ${missingAttributes.join(', ')}`
         };
+    }
+
+    // Валидация настроек
+    if (typeof data.settings !== 'object') {
+        invalidAttributes.push('settings (should be object)');
+    } else {
+        // showTimeline
+        if (typeof data.settings.showTimeline !== 'boolean') {
+            invalidAttributes.push('settings.showTimeline (should be boolean)');
+        }
+        
+        // bpm
+        if (typeof data.settings.bpm !== 'number' || !Number.isInteger(data.settings.bpm) || 
+            data.settings.bpm < 1 || data.settings.bpm > 256) {
+            invalidAttributes.push('settings.bpm (should be integer between 1 and 256)');
+        }
+        
+        // signatureNumerator
+        if (typeof data.settings.signatureNumerator !== 'number' || !Number.isInteger(data.settings.signatureNumerator) || 
+            data.settings.signatureNumerator < 1 || data.settings.signatureNumerator > 8) {
+            invalidAttributes.push('settings.signatureNumerator (should be integer between 1 and 8)');
+        }
+        
+        // signatureDenominator
+        const validDenominators = [1, 2, 4, 8];
+        if (typeof data.settings.signatureDenominator !== 'number' || !Number.isInteger(data.settings.signatureDenominator) || 
+            !validDenominators.includes(data.settings.signatureDenominator)) {
+            invalidAttributes.push('settings.signatureDenominator (should be one of: 1, 2, 4, 8)');
+        }
     }
 
     // Валидация секций
@@ -1130,6 +1178,9 @@ function extractTrackNameFromFileName(fileName) {
 }
 
 function applyImportedData(data) {
+    // Применяем настройки
+    applySettings(data.settings);
+    
     // Очистка текущих данных
     sections = [];
     tracks = [];
@@ -1177,6 +1228,22 @@ function applyImportedData(data) {
     renderTrackHeaders();
     renderTracks();
     updateScrollShadows();
+}
+
+function applySettings(settings) {
+    // Применяем настройки к элементам управления
+    document.getElementById('showTimeline').checked = settings.showTimeline;
+    document.getElementById('bpm').value = settings.bpm;
+    document.getElementById('signatureTop').value = settings.signatureNumerator;
+    document.getElementById('signatureBottom').value = settings.signatureDenominator;
+    
+    // Обновляем видимость таймлайна
+    updateTimelineVisibility();
+    
+    // Обновляем таймлайн (если он видим)
+    if (settings.showTimeline) {
+        updateTimeline();
+    }
 }
 
 function setTrackTitle(trackName) {

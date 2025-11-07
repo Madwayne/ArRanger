@@ -449,6 +449,7 @@ body {
     user-select: none;
     transition: width 0.3s ease, opacity 0.3s ease;
     padding: 0 5px;
+    overflow: hidden;
 }
 
 .section-content {
@@ -457,6 +458,7 @@ body {
     justify-content: space-between;
     width: 100%;
     position: relative;
+    min-width: 0;
 }
 
 .section-number {
@@ -470,16 +472,26 @@ body {
 .section-info {
     flex: 1;
     justify-items: center;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .section-name {
     font-weight: bold;
     font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .section-comment {
     font-size: 12px;
     color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .section-duration {
@@ -487,18 +499,19 @@ body {
     color: #666;
 }
 
-.section-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
+.section-controls-container {
     position: absolute;
-    right: 2px;
-}
-
-.section:hover .section-controls {
-    opacity: 1;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    display: flex;
+    gap: 2px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 4px 4px 0 0;
+    padding: 4px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+    z-index: 5;
 }
 
 .bar {
@@ -621,6 +634,7 @@ body {
     min-height: 50px;
     cursor: move;
     transition: background-color 0.2s ease;
+    overflow: hidden;
 }
 
 .track-header.dragging {
@@ -643,6 +657,7 @@ body {
     width: 100%;
     position: relative;
     padding: 5px 0;
+    min-width: 0;
 }
 
 .track-number {
@@ -657,16 +672,26 @@ body {
     flex: 1;
     margin-right: 5px;
     margin-left: 10px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .track-name-display {
     font-weight: bold;
     font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .track-comment {
     font-size: 12px;
     color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .track-sound {
@@ -674,46 +699,59 @@ body {
     color: #888;
 }
 
-.track-controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-    gap: 2px;
+.track-controls-container {
     position: absolute;
-    right: 2px;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    display: flex;
+    gap: 2px;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 4px 4px 0 0;
+    padding: 4px;
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+    z-index: 5;
 }
 
-.track-header:hover .track-controls {
-    opacity: 1;
+.section:hover .section-controls-container,
+.track-header:hover .track-controls-container {
+    transform: translateX(-50%) translateY(0);
 }
 
-.delete-track-btn,
-.edit-track-btn,
-.add-btn,
-.section-control,
-.edit-btn {
-    font-size: 10px;
-}
-
-.delete-track-btn,
-.edit-track-btn {
-    background: none;
+.control-btn {
+    background: transparent;
     border: none;
     cursor: pointer;
-    color: var(--button-color);
-    width: 20px;
-    height: 20px;
+    width: 25px;
+    height: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 3px;
-    transition: background-color 0.2s ease;
+    font-size: 12px;
+    position: relative;
+    transition: all 0.2s ease;
 }
 
-.delete-track-btn:hover,
-.edit-track-btn:hover {
+.control-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 3px;
+    background-color: var(--button-color);
+    transition: all 0.2s ease;
+    transform: translateX(-50%);
+    border-radius: 2px 2px 0 0;
+}
+
+.control-btn:hover::after {
+    width: 100%;
+}
+
+.control-btn:hover {
     background-color: rgba(74, 111, 165, 0.1);
 }
 
@@ -794,25 +832,6 @@ body {
 
 .track-cell textarea::placeholder {
     color: #888;
-}
-
-.section-control {
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-bottom: 2px;
-    color: var(--button-color);
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    transition: background-color 0.2s ease;
-}
-
-.section-control:hover {
-    background-color: rgba(74, 111, 165, 0.1);
 }
 
 @keyframes fadeOutHorizontal {
@@ -1000,23 +1019,4 @@ body {
 #resetTrackBtn {
     flex-shrink: 0;
     margin-right: 0;
-}
-
-.copy-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--button-color);
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 3px;
-    transition: background-color 0.2s ease;
-    font-size: 10px;
-}
-
-.copy-btn:hover {
-    background-color: rgba(74, 111, 165, 0.1);
 }
