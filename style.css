@@ -883,6 +883,7 @@ body {
 
 .modal-title {
     font-weight: bold;
+    font-size: 20px;
 }
 
 .section-list {
@@ -1019,4 +1020,149 @@ body {
 #resetTrackBtn {
     flex-shrink: 0;
     margin-right: 0;
+}
+
+.track-modal-header {
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.track-modal-name-sound {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 5px;
+}
+
+.track-modal-name {
+    font-weight: bold;
+    font-size: 18px;
+    flex: 1;
+}
+
+.track-modal-sound {
+    font-weight: bold;
+    font-size: 18px;
+    color: #888;
+    flex: 1;
+    text-align: right;
+}
+
+.track-modal-comment {
+    font-size: 14px;
+    color: #888;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.track-modal-content {
+    display: flex;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.track-modal-content .shadow-container {
+    flex: 1;
+    position: relative;
+    max-height: 100%;
+}
+
+.track-modal-sections {
+    width: auto;
+    max-width: var(--left-panel-width);
+    flex-shrink: 0;
+    border-right: 1px solid var(--border-color);
+    overflow-y: auto;
+    scrollbar-width: none;
+    max-height: 100%;
+}
+
+.track-modal-section {
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+    min-height: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: auto;
+    transition: height 0.2s ease;
+}
+
+.track-modal-section:last-child {
+    border-bottom: none;
+}
+
+.track-modal-section-name {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-modal-section-comment {
+    font-size: 12px;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.track-modal-section-duration {
+    font-size: 12px;
+    color: #888;
+}
+
+.track-modal-cells {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+    max-height: 100%;
+}
+
+.track-modal-cell {
+    padding: 5px;
+    border-bottom: 1px solid var(--border-color);
+    min-height: 50px;
+    height: auto;
+    display: flex;
+    align-items: stretch;
+    transition: height 0.2s ease;
+}
+
+.track-modal-cell:last-child {
+    border-bottom: none;
+}
+
+.track-modal-textarea {
+    width: 100%;
+    min-height: 40px;
+    border: none;
+    border-radius: 0px;
+    padding: 4px;
+    font-size: 12px;
+    resize: none;
+    font-family: Arial, sans-serif;
+    background: transparent;
+    line-height: 1.4;
+    outline: none;
+    overflow: hidden;
+    direction: ltr;
+    transition: height 0.2s ease;
+}
+
+.track-modal-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.track-modal-sections::-webkit-scrollbar,
+.track-modal-cells::-webkit-scrollbar {
+    display: none;
+}
+
+.track-modal-sections-container {
+    width: auto;
+    max-width: var(--left-panel-width);
 }

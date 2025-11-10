@@ -14,6 +14,7 @@ let currentEditingSection = null;
 let currentEditingTrack = null;
 let draggedTrack = null;
 let dragOverTrack = null;
+let currentViewingTrack = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
@@ -44,6 +45,13 @@ function initializeApp() {
     document.getElementById('importTrack').addEventListener('click', triggerImport);
     document.getElementById('importFileInput').addEventListener('change', handleFileImport);
     document.getElementById('resetTrackBtn').addEventListener('click', resetTrack);
+    document.getElementById('closeViewTrackModal').addEventListener('click', closeViewTrackModal);
+
+    window.addEventListener('resize', function() {
+        if (document.getElementById('viewTrackModal').style.display === 'flex') {
+            updateModalScrollShadows();
+        }
+    });
 
     addSection({ "Name": "Intro", "Color": "#DAE8FC", "Duration": 4, "Comment": "" });
     addSection({ "Name": "Verse", "Color": "#D5E8D4", "Duration": 8, "Comment": "" });
@@ -674,6 +682,14 @@ function renderTrackHeaders() {
         const trackControlsContainer = document.createElement('div');
         trackControlsContainer.className = 'track-controls-container';
 
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'control-btn';
+        viewBtn.textContent = '👁';
+        viewBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            showViewTrackModal(track);
+        });
+
         const editBtn = document.createElement('button');
         editBtn.className = 'control-btn';
         editBtn.textContent = '✏️';
@@ -697,7 +713,8 @@ function renderTrackHeaders() {
             e.stopPropagation();
             deleteTrack(track.id);
         });
-
+        
+        trackControlsContainer.appendChild(viewBtn);
         trackControlsContainer.appendChild(editBtn);
         trackControlsContainer.appendChild(copyBtn);
         trackControlsContainer.appendChild(deleteBtn);
@@ -818,11 +835,9 @@ function updateTrackRowHeight(trackId) {
 
     if (!trackHeader || !trackRow || !track) return;
 
-    // Сбрасываем высоту строки и заголовка к автоматической для перерасчета
     trackHeader.style.height = 'auto';
     trackRow.style.height = 'auto';
 
-    // Получаем естественную высоту заголовка
     const headerHeight = trackHeader.scrollHeight;
 
     let maxCellHeight = 0;
@@ -831,13 +846,13 @@ function updateTrackRowHeight(trackId) {
     cellTextareas.forEach(textarea => {
         textarea.style.height = 'auto';
         const textareaScrollHeight = textarea.scrollHeight;
-        
+
         const calculatedHeight = Math.max(textareaScrollHeight, 20);
-        
+
         if (calculatedHeight > maxCellHeight) {
             maxCellHeight = calculatedHeight;
         }
-        
+
         if (parseInt(textarea.style.height) !== calculatedHeight) {
             textarea.style.height = `${calculatedHeight}px`;
         }
@@ -945,7 +960,6 @@ function exportTrack() {
         }
     }
 
-    // Создаем массив описаний в нужном формате
     const descriptions = [];
 
     tracks.forEach((track, trackIndex) => {
@@ -1015,25 +1029,20 @@ function handleFileImport(event) {
     };
     reader.readAsText(file);
 
-    // Сброс значения input
     event.target.value = '';
 }
 
 function importTrackData(data, fileName) {
-    // Валидация структуры
     const validation = validateImportData(data);
     if (!validation.isValid) {
         alert(validation.message);
         return;
     }
 
-    // Извлечение имени трека из имени файла
     let trackName = extractTrackNameFromFileName(fileName);
 
-    // Применение данных
     applyImportedData(data);
 
-    // Установка имени трека
     setTrackTitle(trackName);
 
     alert(`File '${fileName}' imported successfully`);
@@ -1043,7 +1052,6 @@ function validateImportData(data) {
     const missingAttributes = [];
     const invalidAttributes = [];
 
-    // Проверка корневых атрибутов
     if (!data.settings) missingAttributes.push('settings');
     if (!data.sections) missingAttributes.push('sections');
     if (!data.tracks) missingAttributes.push('tracks');
@@ -1056,36 +1064,30 @@ function validateImportData(data) {
         };
     }
 
-    // Валидация настроек
     if (typeof data.settings !== 'object') {
         invalidAttributes.push('settings (should be object)');
     } else {
-        // showTimeline
         if (typeof data.settings.showTimeline !== 'boolean') {
             invalidAttributes.push('settings.showTimeline (should be boolean)');
         }
-        
-        // bpm
-        if (typeof data.settings.bpm !== 'number' || !Number.isInteger(data.settings.bpm) || 
+
+        if (typeof data.settings.bpm !== 'number' || !Number.isInteger(data.settings.bpm) ||
             data.settings.bpm < 1 || data.settings.bpm > 256) {
             invalidAttributes.push('settings.bpm (should be integer between 1 and 256)');
         }
-        
-        // signatureNumerator
-        if (typeof data.settings.signatureNumerator !== 'number' || !Number.isInteger(data.settings.signatureNumerator) || 
+
+        if (typeof data.settings.signatureNumerator !== 'number' || !Number.isInteger(data.settings.signatureNumerator) ||
             data.settings.signatureNumerator < 1 || data.settings.signatureNumerator > 8) {
             invalidAttributes.push('settings.signatureNumerator (should be integer between 1 and 8)');
         }
-        
-        // signatureDenominator
+
         const validDenominators = [1, 2, 4, 8];
-        if (typeof data.settings.signatureDenominator !== 'number' || !Number.isInteger(data.settings.signatureDenominator) || 
+        if (typeof data.settings.signatureDenominator !== 'number' || !Number.isInteger(data.settings.signatureDenominator) ||
             !validDenominators.includes(data.settings.signatureDenominator)) {
             invalidAttributes.push('settings.signatureDenominator (should be one of: 1, 2, 4, 8)');
         }
     }
 
-    // Валидация секций
     if (Array.isArray(data.sections)) {
         data.sections.forEach((section, index) => {
             const path = `sections[${index}]`;
@@ -1110,7 +1112,6 @@ function validateImportData(data) {
         invalidAttributes.push('sections (should be array)');
     }
 
-    // Валидация дорожек
     if (Array.isArray(data.tracks)) {
         data.tracks.forEach((track, index) => {
             const path = `tracks[${index}]`;
@@ -1132,7 +1133,6 @@ function validateImportData(data) {
         invalidAttributes.push('tracks (should be array)');
     }
 
-    // Валидация описаний
     if (Array.isArray(data.descriptions)) {
         data.descriptions.forEach((desc, index) => {
             const path = `descriptions[${index}]`;
@@ -1162,30 +1162,23 @@ function validateImportData(data) {
 }
 
 function extractTrackNameFromFileName(fileName) {
-    // Удаляем расширение .json
     let nameWithoutExtension = fileName.replace(/\.json$/, '');
 
-    // Ищем подстроку "_structure"
     const structureIndex = nameWithoutExtension.indexOf('_structure');
 
     if (structureIndex !== -1) {
-        // Если найдено "_structure", берем подстроку до него
         return nameWithoutExtension.substring(0, structureIndex);
     } else {
-        // Иначе берем полное имя файла (без расширения)
         return nameWithoutExtension;
     }
 }
 
 function applyImportedData(data) {
-    // Применяем настройки
     applySettings(data.settings);
-    
-    // Очистка текущих данных
+
     sections = [];
     tracks = [];
 
-    // Сортировка и импорт секций
     const sortedSections = data.sections.sort((a, b) => a.number - b.number);
     sortedSections.forEach(section => {
         addSection({
@@ -1196,7 +1189,6 @@ function applyImportedData(data) {
         });
     });
 
-    // Сортировка и импорт дорожек
     const sortedTracks = data.tracks.sort((a, b) => a.number - b.number);
     sortedTracks.forEach(trackData => {
         const track = {
@@ -1210,7 +1202,6 @@ function applyImportedData(data) {
         tracks.push(track);
     });
 
-    // Импорт описаний
     data.descriptions.forEach(desc => {
         const sectionIndex = desc.sectionNumber - 1;
         const trackIndex = desc.trackNumber - 1;
@@ -1221,7 +1212,6 @@ function applyImportedData(data) {
         }
     });
 
-    // Обновление интерфейса
     renderSections();
     updateBars();
     updateTimeline();
@@ -1231,16 +1221,13 @@ function applyImportedData(data) {
 }
 
 function applySettings(settings) {
-    // Применяем настройки к элементам управления
     document.getElementById('showTimeline').checked = settings.showTimeline;
     document.getElementById('bpm').value = settings.bpm;
     document.getElementById('signatureTop').value = settings.signatureNumerator;
     document.getElementById('signatureBottom').value = settings.signatureDenominator;
-    
-    // Обновляем видимость таймлайна
+
     updateTimelineVisibility();
-    
-    // Обновляем таймлайн (если он видим)
+
     if (settings.showTimeline) {
         updateTimeline();
     }
@@ -1250,13 +1237,10 @@ function setTrackTitle(trackName) {
     const trackTitleElement = document.getElementById('trackTitle');
     if (!trackTitleElement) return;
 
-    // Проверяем, находится ли элемент в режиме редактирования
     const input = trackTitleElement.querySelector('input');
     if (input) {
-        // Если в режиме редактирования, обновляем значение input
         input.value = trackName;
     } else {
-        // Иначе обновляем текст в span
         const span = trackTitleElement.querySelector('span');
         if (span) {
             span.textContent = trackName;
@@ -1265,14 +1249,11 @@ function setTrackTitle(trackName) {
 }
 
 function resetTrack() {
-    // Очистка данных
     sections = [];
     tracks = [];
 
-    // Сброс заголовка
     setTrackTitle("New track");
 
-    // Обновление интерфейса
     renderSections();
     updateBars();
     updateTimeline();
@@ -1295,10 +1276,8 @@ function copySection(sectionId) {
         width: originalSection.width
     };
 
-    // Добавляем секцию в конец списка
     sections.push(copiedSection);
 
-    // Копируем содержимое ячеек для всех дорожек
     const originalSectionIndex = sections.findIndex(s => s.id === sectionId);
     tracks.forEach(track => {
         if (track.cells.length > originalSectionIndex) {
@@ -1309,7 +1288,6 @@ function copySection(sectionId) {
         }
     });
 
-    // Обновляем интерфейс
     renderSections();
     updateBars();
     updateTimeline();
@@ -1321,21 +1299,193 @@ function copyTrack(trackId) {
     const originalTrack = tracks.find(t => t.id === trackId);
     if (!originalTrack) return;
 
-    // Создаем глубокую копию дорожки
     const copiedTrack = {
         id: Date.now() + Math.random(),
         name: `${originalTrack.name} (copy)`,
         sound: originalTrack.sound,
         comment: originalTrack.comment,
         height: originalTrack.height,
-        cells: [...originalTrack.cells] // копируем массив ячеек
+        cells: [...originalTrack.cells]
     };
 
-    // Добавляем дорожку в конец списка
     tracks.push(copiedTrack);
 
     // Обновляем интерфейс
     renderTrackHeaders();
     renderTracks();
     updateScrollShadows();
+}
+
+function showViewTrackModal(track) {
+    currentViewingTrack = track;
+    
+    document.getElementById('viewTrackName').textContent = track.name;
+    document.getElementById('viewTrackSound').textContent = track.sound || '-';
+    document.getElementById('viewTrackComment').textContent = track.comment || '-';
+    
+    const sectionsContainer = document.querySelector('.track-modal-sections');
+    const cellsContainer = document.querySelector('.track-modal-cells');
+    sectionsContainer.innerHTML = '';
+    cellsContainer.innerHTML = '';
+    
+    sections.forEach((section, index) => {
+        const sectionElement = document.createElement('div');
+        sectionElement.className = 'track-modal-section';
+        sectionElement.style.backgroundColor = section.color;
+        sectionElement.setAttribute('data-index', index);
+        
+        const sectionName = document.createElement('div');
+        sectionName.className = 'track-modal-section-name';
+        sectionName.textContent = section.name;
+        
+        const sectionComment = document.createElement('div');
+        sectionComment.className = 'track-modal-section-comment';
+        sectionComment.textContent = section.comment || '-';
+        
+        const sectionDuration = document.createElement('div');
+        sectionDuration.className = 'track-modal-section-duration';
+        sectionDuration.textContent = `${section.duration} bars`;
+        
+        sectionElement.appendChild(sectionName);
+        sectionElement.appendChild(sectionComment);
+        sectionElement.appendChild(sectionDuration);
+        
+        sectionsContainer.appendChild(sectionElement);
+        
+        const cellElement = document.createElement('div');
+        cellElement.className = 'track-modal-cell';
+        cellElement.style.backgroundColor = section.color;
+        cellElement.setAttribute('data-index', index);
+        
+        const textarea = document.createElement('textarea');
+        textarea.className = 'track-modal-textarea';
+        textarea.value = track.cells[index] || '';
+        textarea.placeholder = `Some description for ${track.name} on ${section.name}...`;
+        
+        textarea.addEventListener('input', function() {
+            track.cells[index] = this.value;
+
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+
+            syncModalHeights(index);
+            updateMainTrackCell(track.id, index, this.value);
+            updateModalScrollShadows();
+        });
+
+        cellElement.appendChild(textarea);
+        cellsContainer.appendChild(cellElement);
+
+        setTimeout(() => {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
+            syncModalHeights(index);
+        }, 0);
+    });
+
+    syncModalScroll();
+
+    setTimeout(() => {
+        updateModalScrollShadows();
+    }, 100);
+    
+    document.getElementById('viewTrackModal').style.display = 'flex';
+}
+
+function closeViewTrackModal() {
+    document.getElementById('viewTrackModal').style.display = 'none';
+    currentViewingTrack = null;
+}
+
+function updateMainTrackCell(trackId, sectionIndex, value) {
+    const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
+    if (trackRow) {
+        const cell = trackRow.querySelector(`.track-cell:nth-child(${sectionIndex + 1})`);
+        if (cell) {
+            const textarea = cell.querySelector('textarea');
+            if (textarea && textarea.value !== value) {
+                textarea.value = value;
+
+                textarea.style.height = 'auto';
+                textarea.style.height = (textarea.scrollHeight) + 'px';
+            }
+        }
+    }
+
+    updateTrackRowHeight(trackId);
+}
+
+function syncModalHeights(index) {
+    const sectionElement = document.querySelector(`.track-modal-section:nth-child(${index + 1})`);
+    const cellElement = document.querySelector(`.track-modal-cell:nth-child(${index + 1})`);
+
+    if (!sectionElement || !cellElement) return;
+
+    sectionElement.style.height = 'auto';
+    cellElement.style.height = 'auto';
+
+    const sectionHeight = sectionElement.scrollHeight;
+    const cellHeight = cellElement.scrollHeight;
+
+    const finalHeight = Math.max(sectionHeight, cellHeight, 50);
+
+    sectionElement.style.height = `${finalHeight}px`;
+    cellElement.style.height = `${finalHeight}px`;
+
+    updateModalScrollShadows();
+}
+
+function syncModalScroll() {
+    const sectionsContainer = document.querySelector('.track-modal-sections');
+    const cellsContainer = document.querySelector('.track-modal-cells');
+    
+    if (!sectionsContainer || !cellsContainer) return;
+    
+    sectionsContainer.addEventListener('scroll', function() {
+        cellsContainer.scrollTop = this.scrollTop;
+        updateModalScrollShadows();
+    });
+    
+    cellsContainer.addEventListener('scroll', function() {
+        sectionsContainer.scrollTop = this.scrollTop;
+        updateModalScrollShadows();
+    });
+}
+
+function updateModalScrollShadows() {
+    const modalContainers = [
+        {
+            element: document.getElementById('trackModalSections'),
+            container: document.getElementById('trackModalSectionsContainer'),
+            horizontal: false,
+            vertical: true
+        },
+        {
+            element: document.getElementById('trackModalCells'),
+            container: document.getElementById('trackModalCellsContainer'),
+            horizontal: false,
+            vertical: true
+        }
+    ];
+
+    modalContainers.forEach(item => {
+        if (!item.element || !item.container) return;
+
+        const scrollableToTop = item.element.scrollTop > 0;
+        const scrollableToBottom = item.element.scrollTop + item.element.clientHeight < item.element.scrollHeight - 1;
+
+        const shadowClasses = [
+            'shadow-top', 'shadow-bottom', 'shadow-top-bottom'
+        ];
+        item.container.classList.remove(...shadowClasses);
+
+        let shadowClass = 'shadow';
+
+        if (scrollableToTop && item.vertical) shadowClass += '-top';
+        if (scrollableToBottom && item.vertical) shadowClass += "-bottom";
+
+        if (scrollableToTop || scrollableToBottom) {
+            item.container.classList.add(shadowClass);
+        }
+    });
 }

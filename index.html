@@ -247,6 +247,34 @@
         </div>
     </div>
 
+    <div class="modal" id="viewTrackModal">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <div class="modal-header">
+                <div class="modal-title">Track Details</div>
+            </div>
+            <div class="track-modal-header">
+                <div class="track-modal-name-sound">
+                    <div class="track-modal-name" id="viewTrackName"></div>
+                    <div class="track-modal-sound" id="viewTrackSound"></div>
+                </div>
+                <div class="track-modal-comment" id="viewTrackComment"></div>
+            </div>
+            <div class="track-modal-content">
+                <div class="track-modal-sections-container shadow-container" id="trackModalSectionsContainer">
+                    <div class="track-modal-sections scrollable" id="trackModalSections">
+                    </div>
+                </div>
+                <div class="track-modal-cells-container shadow-container" id="trackModalCellsContainer">
+                    <div class="track-modal-cells scrollable" id="trackModalCells">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="closeViewTrackModal">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 
     <input type="file" id="importFileInput" accept=".json" style="display: none;">
