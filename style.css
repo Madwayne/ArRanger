@@ -267,7 +267,7 @@ body {
 
 .header-right {
     flex-shrink: 0;
-    width: 280px; /* Фиксированная ширина для настроек */
+    width: 300px;
 }
 
 .settings-container {
@@ -319,7 +319,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px;
+    padding: 10px 0;
 }
 
 .import-export-item {
@@ -1165,4 +1165,87 @@ body {
 .track-modal-sections-container {
     width: auto;
     max-width: var(--left-panel-width);
+}
+
+.pdf-export-container {
+    position: absolute;
+    left: -9999px;
+    top: -9999px;
+    background: white;
+    padding: 20px;
+}
+
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #333;
+    padding-bottom: 10px;
+}
+
+.pdf-track-title {
+    font-size: 24px;
+    font-weight: bold;
+    flex: 1;
+}
+
+.pdf-settings {
+    display: flex;
+    gap: 15px;
+    font-size: 14px;
+}
+
+.pdf-setting-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pdf-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.pdf-section-column {
+    min-width: 50px;
+    max-width: 300px;
+    width: auto;
+    border: 1px solid #ccc;
+    vertical-align: top;
+}
+
+.pdf-track-column {
+    min-width: 50px;
+    max-width: 500px;
+    width: auto;
+    border: 1px solid #ccc;
+    vertical-align: top;
+}
+
+.pdf-track-header {
+    height: 60px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    font-weight: bold;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.pdf-section-cell {
+    padding: 8px;
+    border: 1px solid #ccc;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+.pdf-track-cell {
+    padding: 8px;
+    border: 1px solid #ccc;
+    min-height: 20px;
+    max-height: 300px;
+    height: auto;
+    word-wrap: break-word;
+    white-space: pre-wrap;
 }

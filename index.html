@@ -70,6 +70,9 @@
                     <div class="import-export-item" id="exportItem">
                         <button class="btn-primary" id="exportTrack">Export track</button>
                     </div>
+                    <div class="import-export-item" id="pdfItem">
+                        <button class="btn-primary" id="exportPDF">PDF</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -276,6 +279,8 @@
     </div>
 
     <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <input type="file" id="importFileInput" accept=".json" style="display: none;">
 </body>

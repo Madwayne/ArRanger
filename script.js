@@ -46,6 +46,7 @@ function initializeApp() {
     document.getElementById('importFileInput').addEventListener('change', handleFileImport);
     document.getElementById('resetTrackBtn').addEventListener('click', resetTrack);
     document.getElementById('closeViewTrackModal').addEventListener('click', closeViewTrackModal);
+    document.getElementById('exportPDF').addEventListener('click', exportToPDF);
 
     window.addEventListener('resize', function() {
         if (document.getElementById('viewTrackModal').style.display === 'flex') {
@@ -1487,5 +1488,135 @@ function updateModalScrollShadows() {
         if (scrollableToTop || scrollableToBottom) {
             item.container.classList.add(shadowClass);
         }
+    });
+}
+
+function exportToPDF() {
+    const trackTitleElement = document.getElementById('trackTitle');
+    let trackName = 'New track';
+
+    const { jsPDF } = window.jspdf;
+
+    if (trackTitleElement) {
+        const span = trackTitleElement.querySelector('span');
+        const input = trackTitleElement.querySelector('input');
+        if (span) {
+            trackName = span.textContent;
+        } else if (input) {
+            trackName = input.value;
+        }
+    }
+
+    const bpm = document.getElementById('bpm').value;
+    const signatureTop = document.getElementById('signatureTop').value;
+    const signatureBottom = document.getElementById('signatureBottom').value;
+
+    // Создаем временный контейнер для PDF
+    const pdfContainer = document.createElement('div');
+    pdfContainer.className = 'pdf-export-container';
+    pdfContainer.style.width = '1000px'; // Начальная ширина
+    
+    // Заголовок PDF
+    const pdfHeader = document.createElement('div');
+    pdfHeader.className = 'pdf-header';
+    
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'pdf-track-title';
+    titleDiv.textContent = trackName;
+    
+    const settingsDiv = document.createElement('div');
+    settingsDiv.className = 'pdf-settings';
+    
+    const bpmSetting = document.createElement('div');
+    bpmSetting.className = 'pdf-setting-item';
+    bpmSetting.innerHTML = '<span>BPM:</span><span>' + bpm + '</span>';
+    
+    const signatureSetting = document.createElement('div');
+    signatureSetting.className = 'pdf-setting-item';
+    signatureSetting.innerHTML = '<span>Signature:</span><span>' + signatureTop + '/' + signatureBottom + '</span>';
+    
+    settingsDiv.appendChild(bpmSetting);
+    settingsDiv.appendChild(signatureSetting);
+    
+    pdfHeader.appendChild(titleDiv);
+    pdfHeader.appendChild(settingsDiv);
+    pdfContainer.appendChild(pdfHeader);
+    
+    // Создаем таблицу
+    const table = document.createElement('table');
+    table.className = 'pdf-table';
+    
+    // Создаем строку заголовков
+    const headerRow = document.createElement('tr');
+    
+    // Пустая ячейка для секций
+    const emptyHeader = document.createElement('th');
+    emptyHeader.className = 'pdf-section-column';
+    headerRow.appendChild(emptyHeader);
+    
+    // Заголовки для дорожек
+    tracks.forEach(track => {
+        const trackHeader = document.createElement('th');
+        trackHeader.className = 'pdf-track-column pdf-track-header';
+        trackHeader.textContent = track.name;
+        headerRow.appendChild(trackHeader);
+    });
+    
+    table.appendChild(headerRow);
+    
+    // Добавляем строки с секциями и содержимым дорожек
+    sections.forEach((section, sectionIndex) => {
+        const row = document.createElement('tr');
+        
+        // Ячейка секции
+        const sectionCell = document.createElement('td');
+        sectionCell.className = 'pdf-section-column pdf-section-cell';
+        sectionCell.style.backgroundColor = section.color;
+        sectionCell.textContent = section.name;
+        row.appendChild(sectionCell);
+        
+        // Ячейки дорожек
+        tracks.forEach(track => {
+            const trackCell = document.createElement('td');
+            trackCell.className = 'pdf-track-column pdf-track-cell';
+            trackCell.style.backgroundColor = section.color;
+            
+            const cellContent = track.cells[sectionIndex] || '';
+            trackCell.textContent = cellContent;
+            
+            // Автоматическая высота ячейки
+            if (cellContent) {
+                const lineCount = cellContent.split('\n').length;
+                const approximateHeight = Math.min(Math.max(lineCount * 20, 20), 300);
+                trackCell.style.height = approximateHeight + 'px';
+            }
+            
+            row.appendChild(trackCell);
+        });
+        
+        table.appendChild(row);
+    });
+    
+    pdfContainer.appendChild(table);
+    document.body.appendChild(pdfContainer);
+    
+    // Используем html2canvas и jsPDF для создания PDF
+    html2canvas(pdfContainer, {
+        scale: 2,
+        useCORS: true,
+        logging: false
+    }).then(canvas => {
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+        pdf.save(trackName + '_structure.pdf');
+        
+        // Удаляем временный контейнер
+        document.body.removeChild(pdfContainer);
     });
 }
