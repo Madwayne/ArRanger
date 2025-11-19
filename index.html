@@ -121,12 +121,12 @@
         </div>
         
         <div class="workspace-bottom">
-            <div class="fixed-left-bottom-container shadow-container" id="trackHeadersContainer">
-                <div class="track-headers-container scrollable" id="trackHeaders">
+            <div class="fixed-left-bottom-container shadow-container" id="lineHeadersContainer">
+                <div class="line-headers-container scrollable" id="lineHeaders">
                 </div>
             </div>
-            <div class="scrollable-right-bottom-container shadow-container" id="tracksContainerContainer">
-                <div class="scrollable-right-bottom scrollable" id="tracksContainer">
+            <div class="scrollable-right-bottom-container shadow-container" id="linesContainerContainer">
+                <div class="scrollable-right-bottom scrollable" id="linesContainer">
                 </div>
             </div>
         </div>
@@ -214,22 +214,22 @@
         </div>
     </div>
 
-    <div class="modal" id="editTrackModal">
+    <div class="modal" id="editLineModal">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">Edit line</div>
             </div>            
             <div class="form-group">
-                <label for="editTrackName">Line name:</label>
-                <input type="text" id="editTrackName" placeholder="Enter line name">
+                <label for="editLineName">Line name:</label>
+                <input type="text" id="editLineName" placeholder="Enter line name">
             </div>
             <div class="form-group">
-                <label for="editTrackComment">Comment:</label>
-                <textarea id="editTrackComment" placeholder="Enter line comment"></textarea>
+                <label for="editLineComment">Comment:</label>
+                <textarea id="editLineComment" placeholder="Enter line comment"></textarea>
             </div>
             <div class="form-group">
-                <label for="editTrackSound">Sound:</label>
-                <select id="editTrackSound">
+                <label for="editLineSound">Sound:</label>
+                <select id="editLineSound">
                     <option value="">Select sound</option>
                     <option value="Kick">Kick</option>
                     <option value="Snare">Snare</option>
@@ -244,36 +244,36 @@
                 </select>
             </div>
             <div class="modal-buttons">
-                <button class="btn-secondary" id="closeEditTrackModal">Cancel</button>
-                <button class="btn-primary" id="applyTrackChanges">Apply</button>
+                <button class="btn-secondary" id="closeEditLineModal">Cancel</button>
+                <button class="btn-primary" id="applyLineChanges">Apply</button>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="viewTrackModal">
+    <div class="modal" id="viewLineModal">
         <div class="modal-content" style="max-width: 800px; width: 90%;">
             <div class="modal-header">
-                <div class="modal-title">Track Details</div>
+                <div class="modal-title">Line Details</div>
             </div>
-            <div class="track-modal-header">
-                <div class="track-modal-name-sound">
-                    <div class="track-modal-name" id="viewTrackName"></div>
-                    <div class="track-modal-sound" id="viewTrackSound"></div>
+            <div class="line-modal-header">
+                <div class="line-modal-name-sound">
+                    <div class="line-modal-name" id="viewLineName"></div>
+                    <div class="line-modal-sound" id="viewLineSound"></div>
                 </div>
-                <div class="track-modal-comment" id="viewTrackComment"></div>
+                <div class="line-modal-comment" id="viewLineComment"></div>
             </div>
-            <div class="track-modal-content">
-                <div class="track-modal-sections-container shadow-container" id="trackModalSectionsContainer">
-                    <div class="track-modal-sections scrollable" id="trackModalSections">
+            <div class="line-modal-content">
+                <div class="line-modal-sections-container shadow-container" id="lineModalSectionsContainer">
+                    <div class="line-modal-sections scrollable" id="lineModalSections">
                     </div>
                 </div>
-                <div class="track-modal-cells-container shadow-container" id="trackModalCellsContainer">
-                    <div class="track-modal-cells scrollable" id="trackModalCells">
+                <div class="line-modal-cells-container shadow-container" id="lineModalCellsContainer">
+                    <div class="line-modal-cells scrollable" id="lineModalCells">
                     </div>
                 </div>
             </div>
             <div class="modal-buttons">
-                <button class="btn-secondary" id="closeViewTrackModal">Close</button>
+                <button class="btn-secondary" id="closeViewLineModal">Close</button>
             </div>
         </div>
     </div>

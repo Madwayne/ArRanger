@@ -617,13 +617,13 @@ body {
     height: auto;
 }
 
-.track-headers-container {
+.line-headers-container {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-.track-header {
+.line-header {
     border-bottom: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
     display: flex;
@@ -637,20 +637,20 @@ body {
     overflow: hidden;
 }
 
-.track-header.dragging {
+.line-header.dragging {
     opacity: 0.5;
     background-color: var(--hover-color);
 }
 
-.track-header.drag-possible {
+.line-header.drag-possible {
     background-color: rgba(74, 111, 165, 0.05);
 }
 
-.track-header.drag-over {
+.line-header.drag-over {
     background-color: rgba(74, 111, 165, 0.1);
 }
 
-.track-header-content {
+.line-header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -660,7 +660,7 @@ body {
     min-width: 0;
 }
 
-.track-number {
+.line-number {
     display: flex;
     font-size: 12px;
     color: #888;
@@ -668,7 +668,7 @@ body {
     padding-top: 5px;
 }
 
-.track-info {
+.line-info {
     flex: 1;
     margin-right: 5px;
     margin-left: 10px;
@@ -676,7 +676,7 @@ body {
     overflow: hidden;
 }
 
-.track-name-display {
+.line-name-display {
     font-weight: bold;
     font-size: 14px;
     white-space: nowrap;
@@ -685,7 +685,7 @@ body {
     max-width: 100%;
 }
 
-.track-comment {
+.line-comment {
     font-size: 12px;
     color: #888;
     white-space: nowrap;
@@ -694,12 +694,12 @@ body {
     max-width: 100%;
 }
 
-.track-sound {
+.line-sound {
     font-size: 12px;
     color: #888;
 }
 
-.track-controls-container {
+.line-controls-container {
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -715,7 +715,7 @@ body {
 }
 
 .section:hover .section-controls-container,
-.track-header:hover .track-controls-container {
+.line-header:hover .line-controls-container {
     transform: translateX(-50%) translateY(0);
 }
 
@@ -786,7 +786,7 @@ body {
     overflow: auto;
 }
 
-.track-row {
+.line-row {
     display: flex;
     border-bottom: 1px solid var(--border-color);
     min-width: min-content;
@@ -794,21 +794,21 @@ body {
     transition: height 0.3s ease;
 }
 
-.track-row.dragging {
+.line-row.dragging {
     opacity: 0.5;
     background-color: var(--hover-color);
 }
 
-.track-row.drag-possible {
+.line-row.drag-possible {
     background-color: rgba(74, 111, 165, 0.05);
 }
 
-.track-row.drag-over {
+.line-row.drag-over {
     background-color: rgba(74, 111, 165, 0.1);
     border-top: 2px solid var(--primary-color);
 }
 
-.track-cell {
+.line-cell {
     border-right: 1px solid var(--border-color);
     padding: 5px;
     overflow: hidden;
@@ -816,7 +816,7 @@ body {
     transition: width 0.3s ease, opacity 0.3s ease;
 }
 
-.track-cell textarea {
+.line-cell textarea {
     width: 100%;
     height: 100%;
     border: none;
@@ -830,7 +830,7 @@ body {
     direction: ltr;
 }
 
-.track-cell textarea::placeholder {
+.line-cell textarea::placeholder {
     color: #888;
 }
 
@@ -847,7 +847,7 @@ body {
 }
 
 .section.removing,
-.track-cell.removing {
+.line-cell.removing {
     animation: fadeOutHorizontal 0.3s ease forwards;
     overflow: hidden;
 }
@@ -1022,25 +1022,25 @@ body {
     margin-right: 0;
 }
 
-.track-modal-header {
+.line-modal-header {
     margin-bottom: 15px;
     border-bottom: 1px solid var(--border-color);
 }
 
-.track-modal-name-sound {
+.line-modal-name-sound {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 5px;
 }
 
-.track-modal-name {
+.line-modal-name {
     font-weight: bold;
     font-size: 18px;
     flex: 1;
 }
 
-.track-modal-sound {
+.line-modal-sound {
     font-weight: bold;
     font-size: 18px;
     color: #888;
@@ -1048,26 +1048,26 @@ body {
     text-align: right;
 }
 
-.track-modal-comment {
+.line-modal-comment {
     font-size: 14px;
     color: #888;
     width: 100%;
     margin-bottom: 5px;
 }
 
-.track-modal-content {
+.line-modal-content {
     display: flex;
     max-height: 60vh;
     overflow-y: auto;
 }
 
-.track-modal-content .shadow-container {
+.line-modal-content .shadow-container {
     flex: 1;
     position: relative;
     max-height: 100%;
 }
 
-.track-modal-sections {
+.line-modal-sections {
     width: auto;
     max-width: var(--left-panel-width);
     flex-shrink: 0;
@@ -1077,7 +1077,7 @@ body {
     max-height: 100%;
 }
 
-.track-modal-section {
+.line-modal-section {
     padding: 10px;
     border-bottom: 1px solid var(--border-color);
     min-height: 50px;
@@ -1088,11 +1088,11 @@ body {
     transition: height 0.2s ease;
 }
 
-.track-modal-section:last-child {
+.line-modal-section:last-child {
     border-bottom: none;
 }
 
-.track-modal-section-name {
+.line-modal-section-name {
     font-weight: bold;
     font-size: 14px;
     margin-bottom: 5px;
@@ -1101,7 +1101,7 @@ body {
     text-overflow: ellipsis;
 }
 
-.track-modal-section-comment {
+.line-modal-section-comment {
     font-size: 12px;
     color: #888;
     white-space: nowrap;
@@ -1109,19 +1109,19 @@ body {
     text-overflow: ellipsis;
 }
 
-.track-modal-section-duration {
+.line-modal-section-duration {
     font-size: 12px;
     color: #888;
 }
 
-.track-modal-cells {
+.line-modal-cells {
     flex: 1;
     overflow-y: auto;
     scrollbar-width: none;
     max-height: 100%;
 }
 
-.track-modal-cell {
+.line-modal-cell {
     padding: 5px;
     border-bottom: 1px solid var(--border-color);
     min-height: 50px;
@@ -1131,11 +1131,11 @@ body {
     transition: height 0.2s ease;
 }
 
-.track-modal-cell:last-child {
+.line-modal-cell:last-child {
     border-bottom: none;
 }
 
-.track-modal-textarea {
+.line-modal-textarea {
     width: 100%;
     min-height: 40px;
     border: none;
@@ -1152,17 +1152,17 @@ body {
     transition: height 0.2s ease;
 }
 
-.track-modal-textarea:focus {
+.line-modal-textarea:focus {
     outline: none;
     border-color: var(--primary-color);
 }
 
-.track-modal-sections::-webkit-scrollbar,
-.track-modal-cells::-webkit-scrollbar {
+.line-modal-sections::-webkit-scrollbar,
+.line-modal-cells::-webkit-scrollbar {
     display: none;
 }
 
-.track-modal-sections-container {
+.line-modal-sections-container {
     width: auto;
     max-width: var(--left-panel-width);
 }
@@ -1215,7 +1215,7 @@ body {
     vertical-align: top;
 }
 
-.pdf-track-column {
+.pdf-line-column {
     min-width: 50px;
     max-width: 500px;
     width: auto;
@@ -1223,7 +1223,7 @@ body {
     vertical-align: top;
 }
 
-.pdf-track-header {
+.pdf-line-header {
     height: 60px;
     padding: 5px;
     border: 1px solid #ccc;

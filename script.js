@@ -9,12 +9,12 @@ const standardSections = [
 ];
 
 let sections = [];
-let tracks = [];
+let lines = [];
 let currentEditingSection = null;
-let currentEditingTrack = null;
-let draggedTrack = null;
-let dragOverTrack = null;
-let currentViewingTrack = null;
+let currentEditingLine = null;
+let draggedLine = null;
+let dragOverLine = null;
+let currentViewingLine = null;
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
@@ -25,10 +25,10 @@ function initializeApp() {
     initializeSettings();
     initializeStandardSections();
     initializeTimeline();
-    initializeTracks();
+    initializeLines();
 
     document.getElementById('addSectionBtn').addEventListener('click', showAddSectionModal);
-    document.getElementById('addLineBtn').addEventListener('click', addNewTrack);
+    document.getElementById('addLineBtn').addEventListener('click', addNewLine);
     document.getElementById('customSectionBtn').addEventListener('click', showCustomSectionModal);
     document.getElementById('closeAddSectionModal').addEventListener('click', closeAddSectionModal);
     document.getElementById('closeCustomSectionModal').addEventListener('click', closeCustomSectionModal);
@@ -40,16 +40,16 @@ function initializeApp() {
     document.getElementById('editDecreaseDuration').addEventListener('click', () => changeEditDuration(-1));
     document.getElementById('editIncreaseDuration').addEventListener('click', () => changeEditDuration(1));
     document.getElementById('exportTrack').addEventListener('click', exportTrack);
-    document.getElementById('closeEditTrackModal').addEventListener('click', closeEditTrackModal);
-    document.getElementById('applyTrackChanges').addEventListener('click', applyTrackChanges);
+    document.getElementById('closeEditLineModal').addEventListener('click', closeEditLineModal);
+    document.getElementById('applyLineChanges').addEventListener('click', applyLineChanges);
     document.getElementById('importTrack').addEventListener('click', triggerImport);
     document.getElementById('importFileInput').addEventListener('change', handleFileImport);
     document.getElementById('resetTrackBtn').addEventListener('click', resetTrack);
-    document.getElementById('closeViewTrackModal').addEventListener('click', closeViewTrackModal);
+    document.getElementById('closeViewLineModal').addEventListener('click', closeViewLineModal);
     document.getElementById('exportPDF').addEventListener('click', exportToPDF);
 
     window.addEventListener('resize', function() {
-        if (document.getElementById('viewTrackModal').style.display === 'flex') {
+        if (document.getElementById('viewLineModal').style.display === 'flex') {
             updateModalScrollShadows();
         }
     });
@@ -58,7 +58,7 @@ function initializeApp() {
     addSection({ "Name": "Verse", "Color": "#D5E8D4", "Duration": 8, "Comment": "" });
     addSection({ "Name": "Chorus", "Color": "#FFE6CC", "Duration": 8, "Comment": "" });
 
-    addDefaultTracks();
+    addDefaultLines();
 
     synchronizeScroll();
 
@@ -70,7 +70,7 @@ function initializeApp() {
 function synchronizeScroll() {
     const fixedRightTop = document.querySelector('.fixed-right-top');
     const scrollableRightBottom = document.querySelector('.scrollable-right-bottom');
-    const trackHeaders = document.getElementById('trackHeaders');
+    const lineHeaders = document.getElementById('lineHeaders');
 
     fixedRightTop.addEventListener('scroll', function () {
         scrollableRightBottom.scrollLeft = this.scrollLeft;
@@ -82,13 +82,13 @@ function synchronizeScroll() {
         updateScrollShadows();
     });
 
-    trackHeaders.addEventListener('scroll', function () {
+    lineHeaders.addEventListener('scroll', function () {
         scrollableRightBottom.scrollTop = this.scrollTop;
         updateScrollShadows();
     });
 
     scrollableRightBottom.addEventListener('scroll', function () {
-        trackHeaders.scrollTop = this.scrollTop;
+        lineHeaders.scrollTop = this.scrollTop;
         updateScrollShadows();
     });
 }
@@ -123,14 +123,14 @@ function updateScrollShadows() {
             vertical: false
         },
         {
-            element: document.getElementById('tracksContainer'),
-            container: document.getElementById('tracksContainerContainer'),
+            element: document.getElementById('linesContainer'),
+            container: document.getElementById('linesContainerContainer'),
             horizontal: true,
             vertical: true
         },
         {
-            element: document.getElementById('trackHeaders'),
-            container: document.getElementById('trackHeadersContainer'),
+            element: document.getElementById('lineHeaders'),
+            container: document.getElementById('lineHeadersContainer'),
             horizontal: false,
             vertical: true
         }
@@ -273,37 +273,37 @@ function initializeTimeline() {
     // Timeline будет обновляться при изменении настроек и секций
 }
 
-function initializeTracks() {
-    // Tracks будут инициализированы при добавлении
+function initializeLines() {
+    // Lines будут инициализированы при добавлении
 }
 
-function addDefaultTracks() {
-    const defaultTracks = [
+function addDefaultLines() {
+    const defaultLines = [
         { name: "Drums", sound: "Kick", height: 50, comment: "" },
         { name: "Guitar", sound: "Guitar", height: 50, comment: "" },
         { name: "Bass", sound: "Bass", height: 50, comment: "" },
         { name: "Voice", sound: "Vocals", height: 50, comment: "" }
     ];
 
-    defaultTracks.forEach(trackData => {
-        const track = {
+    defaultLines.forEach(lineData => {
+        const line = {
             id: Date.now() + Math.random(),
-            name: trackData.name,
-            sound: trackData.sound,
-            height: trackData.height,
-            comment: trackData.comment,
+            name: lineData.name,
+            sound: lineData.sound,
+            height: lineData.height,
+            comment: lineData.comment,
             cells: []
         };
 
         sections.forEach(() => {
-            track.cells.push('');
+            line.cells.push('');
         });
 
-        tracks.push(track);
+        lines.push(line);
     });
 
-    renderTrackHeaders();
-    renderTracks();
+    renderLineHeaders();
+    renderLines();
 }
 
 function showAddSectionModal() {
@@ -371,14 +371,14 @@ function addSection(sectionData) {
 
     sections.push(section);
 
-    tracks.forEach(track => {
-        track.cells.push('');
+    lines.forEach(line => {
+        line.cells.push('');
     });
 
     renderSections();
     updateBars();
     updateTimeline();
-    renderTracks();
+    renderLines();
     updateScrollShadows();
 }
 
@@ -508,7 +508,7 @@ function applySectionChanges() {
     renderSections();
     updateBars();
     updateTimeline();
-    renderTracks();
+    renderLines();
     closeEditSectionModal();
 }
 
@@ -519,13 +519,13 @@ function deleteSection(sectionId) {
     const sectionElement = document.querySelector(`.section[data-id="${sectionId}"]`);
     const sectionWidth = sectionElement ? sectionElement.getAttribute('data-width') : '0';
 
-    const trackCells = document.querySelectorAll(`.track-row .track-cell:nth-child(${sectionIndex + 1})`);
+    const lineCells = document.querySelectorAll(`.line-row .line-cell:nth-child(${sectionIndex + 1})`);
 
     if (sectionElement) {
         sectionElement.style.setProperty('--original-width', `${sectionWidth}px`);
         sectionElement.classList.add('removing');
 
-        trackCells.forEach(cell => {
+        lineCells.forEach(cell => {
             cell.style.setProperty('--original-width', `${sectionWidth}px`);
             cell.classList.add('removing');
         });
@@ -533,16 +533,16 @@ function deleteSection(sectionId) {
         setTimeout(() => {
             sections = sections.filter(s => s.id !== sectionId);
 
-            tracks.forEach(track => {
-                if (track.cells.length > sectionIndex) {
-                    track.cells.splice(sectionIndex, 1);
+            lines.forEach(line => {
+                if (line.cells.length > sectionIndex) {
+                    line.cells.splice(sectionIndex, 1);
                 }
             });
 
             renderSections();
             updateBars();
             updateTimeline();
-            renderTracks();
+            renderLines();
             updateScrollShadows();
         }, 300);
     }
@@ -557,15 +557,15 @@ function moveSection(draggedId, targetId) {
     const [draggedSection] = sections.splice(draggedIndex, 1);
     sections.splice(targetIndex, 0, draggedSection);
 
-    tracks.forEach(track => {
-        if (track.cells.length > draggedIndex) {
-            const [draggedCell] = track.cells.splice(draggedIndex, 1);
-            track.cells.splice(targetIndex, 0, draggedCell);
+    lines.forEach(line => {
+        if (line.cells.length > draggedIndex) {
+            const [draggedCell] = line.cells.splice(draggedIndex, 1);
+            line.cells.splice(targetIndex, 0, draggedCell);
         }
     });
 
     renderSections();
-    renderTracks();
+    renderLines();
 }
 
 function updateBars() {
@@ -627,8 +627,8 @@ function updateTimeline() {
     timelineRow.appendChild(timelineContainer);
 }
 
-function addNewTrack() {
-    const track = {
+function addNewLine() {
+    const line = {
         id: Date.now() + Math.random(),
         name: 'New line',
         sound: '',
@@ -637,58 +637,58 @@ function addNewTrack() {
         cells: Array(sections.length).fill('')
     };
 
-    tracks.push(track);
-    renderTrackHeaders();
-    renderTracks();
+    lines.push(line);
+    renderLineHeaders();
+    renderLines();
 }
 
-function renderTrackHeaders() {
-    const trackHeadersContainer = document.getElementById('trackHeaders');
-    trackHeadersContainer.innerHTML = '';
+function renderLineHeaders() {
+    const lineHeadersContainer = document.getElementById('lineHeaders');
+    lineHeadersContainer.innerHTML = '';
 
-    tracks.forEach((track, index) => {
-        const trackHeader = document.createElement('div');
-        trackHeader.className = 'track-header';
-        trackHeader.setAttribute('data-id', track.id);
-        trackHeader.setAttribute('draggable', 'true');
+    lines.forEach((line, index) => {
+        const lineHeader = document.createElement('div');
+        lineHeader.className = 'line-header';
+        lineHeader.setAttribute('data-id', line.id);
+        lineHeader.setAttribute('draggable', 'true');
 
         const contentDiv = document.createElement('div');
-        contentDiv.className = 'track-header-content';
+        contentDiv.className = 'line-header-content';
 
-        const trackNumber = document.createElement('div');
-        trackNumber.className = 'track-number';
-        trackNumber.textContent = index + 1;
+        const lineNumber = document.createElement('div');
+        lineNumber.className = 'line-number';
+        lineNumber.textContent = index + 1;
 
-        trackHeader.appendChild(trackNumber);
+        lineHeader.appendChild(lineNumber);
 
-        const trackInfo = document.createElement('div');
-        trackInfo.className = 'track-info';
+        const lineInfo = document.createElement('div');
+        lineInfo.className = 'line-info';
 
         const nameElement = document.createElement('div');
-        nameElement.className = 'track-name-display';
-        nameElement.textContent = track.name;
+        nameElement.className = 'line-name-display';
+        nameElement.textContent = line.name;
 
         const commentElement = document.createElement('div');
-        commentElement.className = 'track-comment';
-        commentElement.textContent = track.comment || '';
+        commentElement.className = 'line-comment';
+        commentElement.textContent = line.comment || '';
 
         const soundElement = document.createElement('div');
-        soundElement.className = 'track-sound';
-        soundElement.textContent = track.sound || '-';
+        soundElement.className = 'line-sound';
+        soundElement.textContent = line.sound || '-';
 
-        trackInfo.appendChild(nameElement);
-        trackInfo.appendChild(commentElement);
-        trackInfo.appendChild(soundElement);
+        lineInfo.appendChild(nameElement);
+        lineInfo.appendChild(commentElement);
+        lineInfo.appendChild(soundElement);
 
-        const trackControlsContainer = document.createElement('div');
-        trackControlsContainer.className = 'track-controls-container';
+        const lineControlsContainer = document.createElement('div');
+        lineControlsContainer.className = 'line-controls-container';
 
         const viewBtn = document.createElement('button');
         viewBtn.className = 'control-btn';
         viewBtn.textContent = '👁';
         viewBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            showViewTrackModal(track);
+            showViewLineModal(line);
         });
 
         const editBtn = document.createElement('button');
@@ -696,7 +696,7 @@ function renderTrackHeaders() {
         editBtn.textContent = '✏️';
         editBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            showEditTrackModal(track);
+            showEditLineModal(line);
         });
 
         const copyBtn = document.createElement('button');
@@ -704,7 +704,7 @@ function renderTrackHeaders() {
         copyBtn.textContent = '📄';
         copyBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            copyTrack(track.id);
+            copyLine(line.id);
         });
 
         const deleteBtn = document.createElement('button');
@@ -712,138 +712,138 @@ function renderTrackHeaders() {
         deleteBtn.textContent = '🗑️';
         deleteBtn.addEventListener('click', function (e) {
             e.stopPropagation();
-            deleteTrack(track.id);
+            deleteLine(line.id);
         });
         
-        trackControlsContainer.appendChild(viewBtn);
-        trackControlsContainer.appendChild(editBtn);
-        trackControlsContainer.appendChild(copyBtn);
-        trackControlsContainer.appendChild(deleteBtn);
-        contentDiv.appendChild(trackInfo);
-        trackHeader.appendChild(trackControlsContainer);
-        trackHeader.appendChild(contentDiv);
+        lineControlsContainer.appendChild(viewBtn);
+        lineControlsContainer.appendChild(editBtn);
+        lineControlsContainer.appendChild(copyBtn);
+        lineControlsContainer.appendChild(deleteBtn);
+        contentDiv.appendChild(lineInfo);
+        lineHeader.appendChild(lineControlsContainer);
+        lineHeader.appendChild(contentDiv);
 
-        trackHeader.addEventListener('dragstart', handleTrackDragStart);
-        trackHeader.addEventListener('dragover', handleTrackDragOver);
-        trackHeader.addEventListener('dragleave', handleTrackDragLeave);
-        trackHeader.addEventListener('drop', handleTrackDrop);
-        trackHeader.addEventListener('dragend', handleTrackDragEnd);
+        lineHeader.addEventListener('dragstart', handleLineDragStart);
+        lineHeader.addEventListener('dragover', handleLineDragOver);
+        lineHeader.addEventListener('dragleave', handleLineDragLeave);
+        lineHeader.addEventListener('drop', handleLineDrop);
+        lineHeader.addEventListener('dragend', handleLineDragEnd);
 
-        trackHeadersContainer.appendChild(trackHeader);
+        lineHeadersContainer.appendChild(lineHeader);
     });
 
     updateScrollShadows();
 }
 
-function handleTrackDragStart(e) {
-    draggedTrack = e.currentTarget;
+function handleLineDragStart(e) {
+    draggedLine = e.currentTarget;
     e.currentTarget.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', e.currentTarget.getAttribute('data-id'));
 
-    document.querySelectorAll('.track-header').forEach(header => {
-        if (header !== draggedTrack) {
+    document.querySelectorAll('.line-header').forEach(header => {
+        if (header !== draggedLine) {
             header.classList.add('drag-possible');
         }
     });
 }
 
-function handleTrackDragOver(e) {
+function handleLineDragOver(e) {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
 
-    const trackHeader = e.currentTarget;
-    if (trackHeader !== draggedTrack && !trackHeader.classList.contains('drag-over')) {
-        trackHeader.classList.add('drag-over');
-        dragOverTrack = trackHeader;
+    const lineHeader = e.currentTarget;
+    if (lineHeader !== draggedLine && !lineHeader.classList.contains('drag-over')) {
+        lineHeader.classList.add('drag-over');
+        dragOverLine = lineHeader;
     }
 }
 
-function handleTrackDragLeave(e) {
+function handleLineDragLeave(e) {
     e.currentTarget.classList.remove('drag-over');
 }
 
-function handleTrackDrop(e) {
+function handleLineDrop(e) {
     e.preventDefault();
 
-    const draggedTrackId = e.dataTransfer.getData('text/plain');
-    const targetTrackId = e.currentTarget.getAttribute('data-id');
+    const draggedLineId = e.dataTransfer.getData('text/plain');
+    const targetLineId = e.currentTarget.getAttribute('data-id');
 
-    if (draggedTrackId !== targetTrackId) {
-        moveTrack(draggedTrackId, targetTrackId);
+    if (draggedLineId !== targetLineId) {
+        moveLine(draggedLineId, targetLineId);
     }
 
     e.currentTarget.classList.remove('drag-over');
 }
 
-function handleTrackDragEnd(e) {
-    document.querySelectorAll('.track-header').forEach(header => {
+function handleLineDragEnd(e) {
+    document.querySelectorAll('.line-header').forEach(header => {
         header.classList.remove('dragging', 'drag-over', 'drag-possible');
     });
 
-    draggedTrack = null;
-    dragOverTrack = null;
+    draggedLine = null;
+    dragOverLine = null;
 }
 
-function moveTrack(draggedTrackId, targetTrackId) {
-    const draggedIndex = tracks.findIndex(t => t.id.toString() === draggedTrackId.toString());
-    const targetIndex = tracks.findIndex(t => t.id.toString() === targetTrackId.toString());
+function moveLine(draggedLineId, targetLineId) {
+    const draggedIndex = lines.findIndex(t => t.id.toString() === draggedLineId.toString());
+    const targetIndex = lines.findIndex(t => t.id.toString() === targetLineId.toString());
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
-    const [draggedTrack] = tracks.splice(draggedIndex, 1);
-    tracks.splice(targetIndex, 0, draggedTrack);
+    const [draggedLine] = lines.splice(draggedIndex, 1);
+    lines.splice(targetIndex, 0, draggedLine);
 
-    renderTrackHeaders();
-    renderTracks();
+    renderLineHeaders();
+    renderLines();
 }
 
-function showEditTrackModal(track) {
-    currentEditingTrack = track;
+function showEditLineModal(line) {
+    currentEditingLine = line;
 
-    document.getElementById('editTrackName').value = track.name;
-    document.getElementById('editTrackComment').value = track.comment || '';
-    document.getElementById('editTrackSound').value = track.sound || '';
+    document.getElementById('editLineName').value = line.name;
+    document.getElementById('editLineComment').value = line.comment || '';
+    document.getElementById('editLineSound').value = line.sound || '';
 
-    document.getElementById('editTrackModal').style.display = 'flex';
+    document.getElementById('editLineModal').style.display = 'flex';
 }
 
-function closeEditTrackModal() {
-    document.getElementById('editTrackModal').style.display = 'none';
-    currentEditingTrack = null;
+function closeEditLineModal() {
+    document.getElementById('editLineModal').style.display = 'none';
+    currentEditingLine = null;
 }
 
-function applyTrackChanges() {
-    if (!currentEditingTrack) return;
+function applyLineChanges() {
+    if (!currentEditingLine) return;
 
-    const name = document.getElementById('editTrackName').value;
-    const comment = document.getElementById('editTrackComment').value;
-    const sound = document.getElementById('editTrackSound').value;
+    const name = document.getElementById('editLineName').value;
+    const comment = document.getElementById('editLineComment').value;
+    const sound = document.getElementById('editLineSound').value;
 
-    currentEditingTrack.name = name;
-    currentEditingTrack.comment = comment;
-    currentEditingTrack.sound = sound;
+    currentEditingLine.name = name;
+    currentEditingLine.comment = comment;
+    currentEditingLine.sound = sound;
 
-    renderTrackHeaders();
-    renderTracks();
-    closeEditTrackModal();
+    renderLineHeaders();
+    renderLines();
+    closeEditLineModal();
 }
 
-function updateTrackRowHeight(trackId) {
-    const trackHeader = document.querySelector(`.track-header[data-id="${trackId}"]`);
-    const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
-    const track = tracks.find(t => t.id === trackId);
+function updateLineRowHeight(lineId) {
+    const lineHeader = document.querySelector(`.line-header[data-id="${lineId}"]`);
+    const lineRow = document.querySelector(`.line-row[data-id="${lineId}"]`);
+    const line = lines.find(t => t.id === lineId);
 
-    if (!trackHeader || !trackRow || !track) return;
+    if (!lineHeader || !lineRow || !line) return;
 
-    trackHeader.style.height = 'auto';
-    trackRow.style.height = 'auto';
+    lineHeader.style.height = 'auto';
+    lineRow.style.height = 'auto';
 
-    const headerHeight = trackHeader.scrollHeight;
+    const headerHeight = lineHeader.scrollHeight;
 
     let maxCellHeight = 0;
 
-    const cellTextareas = trackRow.querySelectorAll('textarea');
+    const cellTextareas = lineRow.querySelectorAll('textarea');
     cellTextareas.forEach(textarea => {
         textarea.style.height = 'auto';
         const textareaScrollHeight = textarea.scrollHeight;
@@ -862,83 +862,83 @@ function updateTrackRowHeight(trackId) {
     const cellPadding = 10;
     const finalHeight = Math.max(headerHeight, maxCellHeight + cellPadding, 50);
 
-    if (parseInt(trackHeader.style.height) !== finalHeight) {
-        trackHeader.style.height = `${finalHeight}px`;
-        trackRow.style.height = `${finalHeight}px`;
-        track.height = finalHeight;
+    if (parseInt(lineHeader.style.height) !== finalHeight) {
+        lineHeader.style.height = `${finalHeight}px`;
+        lineRow.style.height = `${finalHeight}px`;
+        line.height = finalHeight;
     }
 
     updateScrollShadows();
 }
 
-function updateTrackPlaceholders(trackId) {
-    const track = tracks.find(t => t.id === trackId);
-    if (!track) return;
+function updateLinePlaceholders(lineId) {
+    const line = lines.find(t => t.id === lineId);
+    if (!line) return;
 
-    const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
-    if (!trackRow) return;
+    const lineRow = document.querySelector(`.line-row[data-id="${lineId}"]`);
+    if (!lineRow) return;
 
-    const textareas = trackRow.querySelectorAll('textarea');
+    const textareas = lineRow.querySelectorAll('textarea');
     textareas.forEach((textarea, index) => {
-        textarea.placeholder = `Some description for ${track.name} on ${sections[index].name}...`;
+        textarea.placeholder = `Some description for ${line.name} on ${sections[index].name}...`;
     });
 }
 
-function deleteTrack(trackId) {
-    const trackIndex = tracks.findIndex(t => t.id === trackId);
-    if (trackIndex === -1) return;
+function deleteLine(lineId) {
+    const lineIndex = lines.findIndex(t => t.id === lineId);
+    if (lineIndex === -1) return;
 
-    const trackHeader = document.querySelector(`.track-header[data-id="${trackId}"]`);
-    const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
+    const lineHeader = document.querySelector(`.line-header[data-id="${lineId}"]`);
+    const lineRow = document.querySelector(`.line-row[data-id="${lineId}"]`);
 
-    if (trackHeader && trackRow) {
-        trackHeader.classList.add('removing');
-        trackRow.classList.add('removing');
+    if (lineHeader && lineRow) {
+        lineHeader.classList.add('removing');
+        lineRow.classList.add('removing');
 
         setTimeout(() => {
-            tracks.splice(trackIndex, 1);
-            renderTrackHeaders();
-            renderTracks();
+            lines.splice(lineIndex, 1);
+            renderLineHeaders();
+            renderLines();
             updateScrollShadows();
         }, 300);
     }
 }
 
-function renderTracks() {
-    const tracksContainer = document.getElementById('tracksContainer');
-    tracksContainer.innerHTML = '';
+function renderLines() {
+    const linesContainer = document.getElementById('linesContainer');
+    linesContainer.innerHTML = '';
 
-    tracks.forEach(track => {
-        const trackRow = document.createElement('div');
-        trackRow.className = 'track-row';
-        trackRow.setAttribute('data-id', track.id);
+    lines.forEach(line => {
+        const lineRow = document.createElement('div');
+        lineRow.className = 'line-row';
+        lineRow.setAttribute('data-id', line.id);
 
         sections.forEach((section, index) => {
             const cell = document.createElement('div');
-            cell.className = 'track-cell';
+            cell.className = 'line-cell';
             cell.style.backgroundColor = section.color;
             cell.style.width = `${section.width}px`;
             cell.setAttribute('data-width', section.width);
 
             const textarea = document.createElement('textarea');
-            textarea.value = track.cells[index] || '';
+            textarea.value = line.cells[index] || '';
 
-            textarea.placeholder = `Some description for ${track.name} on ${section.name}...`;
+            textarea.placeholder = `Some description for ${line.name} on ${section.name}...`;
 
             textarea.addEventListener('input', function () {
-                track.cells[index] = this.value;
+                line.cells[index] = this.value;
 
-                updateTrackRowHeight(track.id);
+                updateLineRowHeight(line.id);
             });
 
             cell.appendChild(textarea);
-            trackRow.appendChild(cell);
+            lineRow.appendChild(cell);
         });
 
-        tracksContainer.appendChild(trackRow);
+        linesContainer.appendChild(lineRow);
 
         setTimeout(() => {
-            updateTrackRowHeight(track.id);
+            updateLineRowHeight(line.id);
         }, 0);
     });
 
@@ -963,13 +963,13 @@ function exportTrack() {
 
     const descriptions = [];
 
-    tracks.forEach((track, trackIndex) => {
+    lines.forEach((line, lineIndex) => {
         sections.forEach((section, sectionIndex) => {
-            const description = track.cells[sectionIndex] || '';
+            const description = line.cells[sectionIndex] || '';
             if (description.trim() !== '') {
                 descriptions.push({
                     sectionNumber: sectionIndex + 1,
-                    trackNumber: trackIndex + 1,
+                    lineNumber: lineIndex + 1,
                     description: description
                 });
             }
@@ -990,11 +990,11 @@ function exportTrack() {
             color: section.color,
             comment: section.comment || ''
         })),
-        tracks: tracks.map((track, index) => ({
+        lines: lines.map((line, index) => ({
             number: index + 1,
-            name: track.name,
-            sound: track.sound,
-            comment: track.comment || ''
+            name: line.name,
+            sound: line.sound,
+            comment: line.comment || ''
         })),
         descriptions: descriptions
     };
@@ -1055,7 +1055,7 @@ function validateImportData(data) {
 
     if (!data.settings) missingAttributes.push('settings');
     if (!data.sections) missingAttributes.push('sections');
-    if (!data.tracks) missingAttributes.push('tracks');
+    if (!data.lines) missingAttributes.push('lines');
     if (!data.descriptions) missingAttributes.push('descriptions');
 
     if (missingAttributes.length > 0) {
@@ -1113,25 +1113,25 @@ function validateImportData(data) {
         invalidAttributes.push('sections (should be array)');
     }
 
-    if (Array.isArray(data.tracks)) {
-        data.tracks.forEach((track, index) => {
-            const path = `tracks[${index}]`;
+    if (Array.isArray(data.lines)) {
+        data.lines.forEach((line, index) => {
+            const path = `lines[${index}]`;
 
-            if (typeof track.number !== 'number' || !Number.isInteger(track.number) || track.number <= 0) {
+            if (typeof line.number !== 'number' || !Number.isInteger(line.number) || line.number <= 0) {
                 invalidAttributes.push(`${path}.number`);
             }
-            if (typeof track.name !== 'string') {
+            if (typeof line.name !== 'string') {
                 invalidAttributes.push(`${path}.name`);
             }
-            if (typeof track.sound !== 'string') {
+            if (typeof line.sound !== 'string') {
                 invalidAttributes.push(`${path}.sound`);
             }
-            if (track.hasOwnProperty('comment') && typeof track.comment !== 'string') {
+            if (line.hasOwnProperty('comment') && typeof line.comment !== 'string') {
                 invalidAttributes.push(`${path}.comment`);
             }
         });
     } else {
-        invalidAttributes.push('tracks (should be array)');
+        invalidAttributes.push('lines (should be array)');
     }
 
     if (Array.isArray(data.descriptions)) {
@@ -1141,8 +1141,8 @@ function validateImportData(data) {
             if (typeof desc.sectionNumber !== 'number' || !Number.isInteger(desc.sectionNumber) || desc.sectionNumber <= 0) {
                 invalidAttributes.push(`${path}.sectionNumber`);
             }
-            if (typeof desc.trackNumber !== 'number' || !Number.isInteger(desc.trackNumber) || desc.trackNumber <= 0) {
-                invalidAttributes.push(`${path}.trackNumber`);
+            if (typeof desc.lineNumber !== 'number' || !Number.isInteger(desc.lineNumber) || desc.lineNumber <= 0) {
+                invalidAttributes.push(`${path}.lineNumber`);
             }
             if (typeof desc.description !== 'string') {
                 invalidAttributes.push(`${path}.description`);
@@ -1178,7 +1178,7 @@ function applyImportedData(data) {
     applySettings(data.settings);
 
     sections = [];
-    tracks = [];
+    lines = [];
 
     const sortedSections = data.sections.sort((a, b) => a.number - b.number);
     sortedSections.forEach(section => {
@@ -1190,34 +1190,34 @@ function applyImportedData(data) {
         });
     });
 
-    const sortedTracks = data.tracks.sort((a, b) => a.number - b.number);
-    sortedTracks.forEach(trackData => {
-        const track = {
+    const sortedLines = data.lines.sort((a, b) => a.number - b.number);
+    sortedLines.forEach(lineData => {
+        const line = {
             id: Date.now() + Math.random(),
-            name: trackData.name,
-            sound: trackData.sound,
-            comment: trackData.comment || '',
+            name: lineData.name,
+            sound: lineData.sound,
+            comment: lineData.comment || '',
             height: 50,
             cells: Array(sections.length).fill('')
         };
-        tracks.push(track);
+        lines.push(line);
     });
 
     data.descriptions.forEach(desc => {
         const sectionIndex = desc.sectionNumber - 1;
-        const trackIndex = desc.trackNumber - 1;
+        const lineIndex = desc.lineNumber - 1;
 
         if (sectionIndex >= 0 && sectionIndex < sections.length &&
-            trackIndex >= 0 && trackIndex < tracks.length) {
-            tracks[trackIndex].cells[sectionIndex] = desc.description;
+            lineIndex >= 0 && lineIndex < lines.length) {
+            lines[lineIndex].cells[sectionIndex] = desc.description;
         }
     });
 
     renderSections();
     updateBars();
     updateTimeline();
-    renderTrackHeaders();
-    renderTracks();
+    renderLineHeaders();
+    renderLines();
     updateScrollShadows();
 }
 
@@ -1251,15 +1251,15 @@ function setTrackTitle(trackName) {
 
 function resetTrack() {
     sections = [];
-    tracks = [];
+    lines = [];
 
     setTrackTitle("New track");
 
     renderSections();
     updateBars();
     updateTimeline();
-    renderTrackHeaders();
-    renderTracks();
+    renderLineHeaders();
+    renderLines();
     updateScrollShadows();
 }
 
@@ -1280,71 +1280,71 @@ function copySection(sectionId) {
     sections.push(copiedSection);
 
     const originalSectionIndex = sections.findIndex(s => s.id === sectionId);
-    tracks.forEach(track => {
-        if (track.cells.length > originalSectionIndex) {
-            const cellContent = track.cells[originalSectionIndex];
-            track.cells.push(cellContent);
+    lines.forEach(line => {
+        if (line.cells.length > originalSectionIndex) {
+            const cellContent = line.cells[originalSectionIndex];
+            line.cells.push(cellContent);
         } else {
-            track.cells.push('');
+            line.cells.push('');
         }
     });
 
     renderSections();
     updateBars();
     updateTimeline();
-    renderTracks();
+    renderLines();
     updateScrollShadows();
 }
 
-function copyTrack(trackId) {
-    const originalTrack = tracks.find(t => t.id === trackId);
-    if (!originalTrack) return;
+function copyLine(lineId) {
+    const originalLine = lines.find(t => t.id === lineId);
+    if (!originalLine) return;
 
-    const copiedTrack = {
+    const copiedLine = {
         id: Date.now() + Math.random(),
-        name: `${originalTrack.name} (copy)`,
-        sound: originalTrack.sound,
-        comment: originalTrack.comment,
-        height: originalTrack.height,
-        cells: [...originalTrack.cells]
+        name: `${originalLine.name} (copy)`,
+        sound: originalLine.sound,
+        comment: originalLine.comment,
+        height: originalLine.height,
+        cells: [...originalLine.cells]
     };
 
-    tracks.push(copiedTrack);
+    lines.push(copiedLine);
 
     // Обновляем интерфейс
-    renderTrackHeaders();
-    renderTracks();
+    renderLineHeaders();
+    renderLines();
     updateScrollShadows();
 }
 
-function showViewTrackModal(track) {
-    currentViewingTrack = track;
+function showViewLineModal(line) {
+    currentViewingLine = line;
     
-    document.getElementById('viewTrackName').textContent = track.name;
-    document.getElementById('viewTrackSound').textContent = track.sound || '-';
-    document.getElementById('viewTrackComment').textContent = track.comment || '-';
+    document.getElementById('viewLineName').textContent = line.name;
+    document.getElementById('viewLineSound').textContent = line.sound || '-';
+    document.getElementById('viewLineComment').textContent = line.comment || '-';
     
-    const sectionsContainer = document.querySelector('.track-modal-sections');
-    const cellsContainer = document.querySelector('.track-modal-cells');
+    const sectionsContainer = document.querySelector('.line-modal-sections');
+    const cellsContainer = document.querySelector('.line-modal-cells');
     sectionsContainer.innerHTML = '';
     cellsContainer.innerHTML = '';
     
     sections.forEach((section, index) => {
         const sectionElement = document.createElement('div');
-        sectionElement.className = 'track-modal-section';
+        sectionElement.className = 'line-modal-section';
         sectionElement.style.backgroundColor = section.color;
         sectionElement.setAttribute('data-index', index);
         
         const sectionName = document.createElement('div');
-        sectionName.className = 'track-modal-section-name';
+        sectionName.className = 'line-modal-section-name';
         sectionName.textContent = section.name;
         
         const sectionComment = document.createElement('div');
-        sectionComment.className = 'track-modal-section-comment';
+        sectionComment.className = 'line-modal-section-comment';
         sectionComment.textContent = section.comment || '-';
         
         const sectionDuration = document.createElement('div');
-        sectionDuration.className = 'track-modal-section-duration';
+        sectionDuration.className = 'line-modal-section-duration';
         sectionDuration.textContent = `${section.duration} bars`;
         
         sectionElement.appendChild(sectionName);
@@ -1354,23 +1354,23 @@ function showViewTrackModal(track) {
         sectionsContainer.appendChild(sectionElement);
         
         const cellElement = document.createElement('div');
-        cellElement.className = 'track-modal-cell';
+        cellElement.className = 'line-modal-cell';
         cellElement.style.backgroundColor = section.color;
         cellElement.setAttribute('data-index', index);
         
         const textarea = document.createElement('textarea');
-        textarea.className = 'track-modal-textarea';
-        textarea.value = track.cells[index] || '';
-        textarea.placeholder = `Some description for ${track.name} on ${section.name}...`;
+        textarea.className = 'line-modal-textarea';
+        textarea.value = line.cells[index] || '';
+        textarea.placeholder = `Some description for ${line.name} on ${section.name}...`;
         
         textarea.addEventListener('input', function() {
-            track.cells[index] = this.value;
+            line.cells[index] = this.value;
 
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
 
             syncModalHeights(index);
-            updateMainTrackCell(track.id, index, this.value);
+            updateMainLineCell(line.id, index, this.value);
             updateModalScrollShadows();
         });
 
@@ -1390,18 +1390,18 @@ function showViewTrackModal(track) {
         updateModalScrollShadows();
     }, 100);
     
-    document.getElementById('viewTrackModal').style.display = 'flex';
+    document.getElementById('viewLineModal').style.display = 'flex';
 }
 
-function closeViewTrackModal() {
-    document.getElementById('viewTrackModal').style.display = 'none';
-    currentViewingTrack = null;
+function closeViewLineModal() {
+    document.getElementById('viewLineModal').style.display = 'none';
+    currentViewingLine = null;
 }
 
-function updateMainTrackCell(trackId, sectionIndex, value) {
-    const trackRow = document.querySelector(`.track-row[data-id="${trackId}"]`);
-    if (trackRow) {
-        const cell = trackRow.querySelector(`.track-cell:nth-child(${sectionIndex + 1})`);
+function updateMainLineCell(lineId, sectionIndex, value) {
+    const lineRow = document.querySelector(`.line-row[data-id="${lineId}"]`);
+    if (lineRow) {
+        const cell = lineRow.querySelector(`.line-cell:nth-child(${sectionIndex + 1})`);
         if (cell) {
             const textarea = cell.querySelector('textarea');
             if (textarea && textarea.value !== value) {
@@ -1413,12 +1413,12 @@ function updateMainTrackCell(trackId, sectionIndex, value) {
         }
     }
 
-    updateTrackRowHeight(trackId);
+    updateLineRowHeight(lineId);
 }
 
 function syncModalHeights(index) {
-    const sectionElement = document.querySelector(`.track-modal-section:nth-child(${index + 1})`);
-    const cellElement = document.querySelector(`.track-modal-cell:nth-child(${index + 1})`);
+    const sectionElement = document.querySelector(`.line-modal-section:nth-child(${index + 1})`);
+    const cellElement = document.querySelector(`.line-modal-cell:nth-child(${index + 1})`);
 
     if (!sectionElement || !cellElement) return;
 
@@ -1437,8 +1437,8 @@ function syncModalHeights(index) {
 }
 
 function syncModalScroll() {
-    const sectionsContainer = document.querySelector('.track-modal-sections');
-    const cellsContainer = document.querySelector('.track-modal-cells');
+    const sectionsContainer = document.querySelector('.line-modal-sections');
+    const cellsContainer = document.querySelector('.line-modal-cells');
     
     if (!sectionsContainer || !cellsContainer) return;
     
@@ -1456,14 +1456,14 @@ function syncModalScroll() {
 function updateModalScrollShadows() {
     const modalContainers = [
         {
-            element: document.getElementById('trackModalSections'),
-            container: document.getElementById('trackModalSectionsContainer'),
+            element: document.getElementById('lineModalSections'),
+            container: document.getElementById('lineModalSectionsContainer'),
             horizontal: false,
             vertical: true
         },
         {
-            element: document.getElementById('trackModalCells'),
-            container: document.getElementById('trackModalCellsContainer'),
+            element: document.getElementById('lineModalCells'),
+            container: document.getElementById('lineModalCellsContainer'),
             horizontal: false,
             vertical: true
         }
@@ -1555,11 +1555,11 @@ function exportToPDF() {
     headerRow.appendChild(emptyHeader);
     
     // Заголовки для дорожек
-    tracks.forEach(track => {
-        const trackHeader = document.createElement('th');
-        trackHeader.className = 'pdf-track-column pdf-track-header';
-        trackHeader.textContent = track.name;
-        headerRow.appendChild(trackHeader);
+    lines.forEach(line => {
+        const lineHeader = document.createElement('th');
+        lineHeader.className = 'pdf-line-column pdf-line-header';
+        lineHeader.textContent = line.name;
+        headerRow.appendChild(lineHeader);
     });
     
     table.appendChild(headerRow);
@@ -1576,22 +1576,22 @@ function exportToPDF() {
         row.appendChild(sectionCell);
         
         // Ячейки дорожек
-        tracks.forEach(track => {
-            const trackCell = document.createElement('td');
-            trackCell.className = 'pdf-track-column pdf-track-cell';
-            trackCell.style.backgroundColor = section.color;
+        lines.forEach(line => {
+            const lineCell = document.createElement('td');
+            lineCell.className = 'pdf-line-column pdf-line-cell';
+            lineCell.style.backgroundColor = section.color;
             
-            const cellContent = track.cells[sectionIndex] || '';
-            trackCell.textContent = cellContent;
+            const cellContent = line.cells[sectionIndex] || '';
+            lineCell.textContent = cellContent;
             
             // Автоматическая высота ячейки
             if (cellContent) {
                 const lineCount = cellContent.split('\n').length;
                 const approximateHeight = Math.min(Math.max(lineCount * 20, 20), 300);
-                trackCell.style.height = approximateHeight + 'px';
+                lineCell.style.height = approximateHeight + 'px';
             }
             
-            row.appendChild(trackCell);
+            row.appendChild(lineCell);
         });
         
         table.appendChild(row);
