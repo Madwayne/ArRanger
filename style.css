@@ -324,6 +324,7 @@ body {
 
 .import-export-item {
     align-items: center;
+    margin: 0 2px;
 }
 
 @media (max-width: 768px) {
@@ -981,7 +982,7 @@ body {
     color: white;
     border: none;
     border-radius: 3px;
-    height: 30px;
+    height: auto;
     padding: 5px 10px;
     cursor: pointer;
 }
