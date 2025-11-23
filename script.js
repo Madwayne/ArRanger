@@ -1609,7 +1609,7 @@ function exportToPDF() {
     }).then(canvas => {
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
         const pdf = new jsPDF({
-            orientation: 'portrait',
+            orientation: 'album',
             unit: 'px',
             format: [canvas.width, canvas.height]
         });
