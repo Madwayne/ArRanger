@@ -978,6 +978,7 @@ function exportTrack() {
 
     const exportData = {
         settings: {
+            trackName: trackName,
             showTimeline: document.getElementById('showTimeline').checked,
             bpm: parseInt(document.getElementById('bpm').value),
             signatureNumerator: parseInt(document.getElementById('signatureTop').value),
@@ -1040,7 +1041,7 @@ function importTrackData(data, fileName) {
         return;
     }
 
-    let trackName = extractTrackNameFromFileName(fileName);
+    let trackName = data.settings.trackName || extractTrackNameFromFileName(fileName);
 
     applyImportedData(data);
 
