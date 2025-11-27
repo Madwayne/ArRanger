@@ -203,6 +203,59 @@ body {
     width: 200px; /* Фиксированная ширина логотипа */
 }
 
+.track-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.track-controls .btn-primary {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.tracks-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.track-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.track-item:last-child {
+    border-bottom: none;
+}
+
+.track-info {
+    flex: 1;
+}
+
+.track-name {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.track-date {
+    font-size: 12px;
+    color: #888;
+}
+
+.track-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.track-actions button {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
 .track-title {
     font-size: 32px;
     font-weight: bold;

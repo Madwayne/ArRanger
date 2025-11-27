@@ -11,6 +11,10 @@
         <div class="header-left">
             <div class="header-left-top">
                 <div class="logo">ArRanger</div>
+                <div class="track-controls">
+                    <button class="btn-primary" id="saveTrackBtn">💾 Save</button>
+                    <button class="btn-primary" id="openTrackBtn">📂 Open</button>
+                </div>
                 <div class="track-title" id="trackTitle">
                     <span>New track</span>
                     <button class="edit-btn">✏️</button>
@@ -274,6 +278,20 @@
             </div>
             <div class="modal-buttons">
                 <button class="btn-secondary" id="closeViewLineModal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="openTrackModal">
+        <div class="modal-content" style="max-width: 600px; width: 90%;">
+            <div class="modal-header">
+                <div class="modal-title">Open Track</div>
+            </div>
+            <div class="tracks-list" id="tracksList">
+                <!-- Список треков будет заполнен динамически -->
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-secondary" id="closeOpenTrackModal">Close</button>
             </div>
         </div>
     </div>

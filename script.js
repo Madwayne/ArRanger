@@ -15,6 +15,7 @@ let currentEditingLine = null;
 let draggedLine = null;
 let dragOverLine = null;
 let currentViewingLine = null;
+let currentTrackId = null; // ID текущего трека (null для нового трека)
 
 document.addEventListener('DOMContentLoaded', function () {
     initializeApp();
@@ -47,6 +48,9 @@ function initializeApp() {
     document.getElementById('resetTrackBtn').addEventListener('click', resetTrack);
     document.getElementById('closeViewLineModal').addEventListener('click', closeViewLineModal);
     document.getElementById('exportPDF').addEventListener('click', exportToPDF);
+    document.getElementById('saveTrackBtn').addEventListener('click', saveTrack);
+    document.getElementById('openTrackBtn').addEventListener('click', openTrackModal);
+    document.getElementById('closeOpenTrackModal').addEventListener('click', closeOpenTrackModal);
 
     window.addEventListener('resize', function() {
         if (document.getElementById('viewLineModal').style.display === 'flex') {
@@ -945,7 +949,7 @@ function renderLines() {
     updateScrollShadows();
 }
 
-function exportTrack() {
+function getCurrentTrackData() {
     const trackTitleElement = document.getElementById('trackTitle');
     let trackName = 'New track';
 
@@ -1000,7 +1004,14 @@ function exportTrack() {
         descriptions: descriptions
     };
 
-    const dataStr = JSON.stringify(exportData, null, 2);
+    return exportData;
+}
+
+function exportTrack() {
+    const exportDataJSON = getCurrentTrackData();
+
+    const trackName = exportDataJSON.settings.trackName;
+    const dataStr = JSON.stringify(exportDataJSON, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
     const link = document.createElement('a');
@@ -1012,8 +1023,156 @@ function exportTrack() {
     URL.revokeObjectURL(link.href);
 }
 
+// Функция для сохранения трека
+function saveTrack() {
+    const trackData = getCurrentTrackData();
+    
+    if (currentTrackId === null) {
+        // Создание нового трека
+        fetch('http://localhost:5000/tracks', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(trackData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            currentTrackId = data.track_id;
+            alert('Track created successfully!');
+        })
+        .catch(error => {
+            console.error('Error creating track:', error);
+            alert('Error creating track');
+        });
+    } else {
+        // Обновление существующего трека
+        fetch(`http://localhost:5000/tracks/${currentTrackId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(trackData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Track updated successfully!');
+        })
+        .catch(error => {
+            console.error('Error updating track:', error);
+            alert('Error updating track');
+        });
+    }
+}
+
 function triggerImport() {
     document.getElementById('importFileInput').click();
+}
+
+// Функция для открытия модального окна со списком треков
+function openTrackModal() {
+    // Получаем список треков с сервера
+    fetch('http://localhost:5000/tracks')
+        .then(response => response.json())
+        .then(tracks => {
+            const tracksList = document.getElementById('tracksList');
+            tracksList.innerHTML = '';
+            
+            if (tracks.length === 0) {
+                tracksList.innerHTML = '<p>No tracks found</p>';
+                document.getElementById('openTrackModal').style.display = 'flex';
+                return;
+            }
+            
+            tracks.forEach(track => {
+                const trackItem = document.createElement('div');
+                trackItem.className = 'track-item';
+                
+                const trackInfo = document.createElement('div');
+                trackInfo.className = 'track-info';
+                
+                const trackName = document.createElement('div');
+                trackName.className = 'track-name';
+                trackName.textContent = track.track_name;
+                
+                const trackDate = document.createElement('div');
+                trackDate.className = 'track-date';
+                trackDate.textContent = new Date(track.updated_datetime).toLocaleString();
+                
+                trackInfo.appendChild(trackName);
+                trackInfo.appendChild(trackDate);
+                
+                const trackActions = document.createElement('div');
+                trackActions.className = 'track-actions';
+                
+                const openBtn = document.createElement('button');
+                openBtn.className = 'btn-primary';
+                openBtn.textContent = 'Open';
+                openBtn.addEventListener('click', () => openTrack(track.track_id));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn-secondary';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.addEventListener('click', () => deleteTrack(track.track_id, trackItem));
+                
+                trackActions.appendChild(openBtn);
+                trackActions.appendChild(deleteBtn);
+                
+                trackItem.appendChild(trackInfo);
+                trackItem.appendChild(trackActions);
+                
+                tracksList.appendChild(trackItem);
+            });
+            
+            document.getElementById('openTrackModal').style.display = 'flex';
+        })
+        .catch(error => {
+            console.error('Error fetching tracks:', error);
+            alert('Error fetching tracks');
+        });
+}
+
+// Функция для закрытия модального окна со списком треков
+function closeOpenTrackModal() {
+    document.getElementById('openTrackModal').style.display = 'none';
+}
+
+// Функция для открытия трека
+function openTrack(trackId) {
+    fetch(`http://localhost:5000/tracks/${trackId}`)
+        .then(response => response.json())
+        .then(data => {
+            // Применяем данные трека
+            applyImportedData(data);
+            currentTrackId = trackId;
+            closeOpenTrackModal();
+            alert('Track loaded successfully!');
+        })
+        .catch(error => {
+            console.error('Error loading track:', error);
+            alert('Error loading track');
+        });
+}
+
+// Функция для удаления трека
+function deleteTrack(trackId, trackElement) {
+    if (!confirm('Are you sure you want to delete this track?')) {
+        return;
+    }
+    
+    fetch(`http://localhost:5000/tracks/${trackId}`, {
+        method: 'DELETE'
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Удаляем элемент из списка
+        trackElement.remove();
+        alert('Track deleted successfully!');
+    })
+    .catch(error => {
+        console.error('Error deleting track:', error);
+        alert('Error deleting track');
+    });
 }
 
 function handleFileImport(event) {
