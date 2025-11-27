@@ -1146,7 +1146,6 @@ function openTrack(trackId) {
             applyImportedData(data);
             currentTrackId = trackId;
             closeOpenTrackModal();
-            alert('Track loaded successfully!');
         })
         .catch(error => {
             console.error('Error loading track:', error);
@@ -1167,7 +1166,6 @@ function deleteTrack(trackId, trackElement) {
     .then(data => {
         // Удаляем элемент из списка
         trackElement.remove();
-        alert('Track deleted successfully!');
     })
     .catch(error => {
         console.error('Error deleting track:', error);
@@ -1205,8 +1203,6 @@ function importTrackData(data, fileName) {
     applyImportedData(data);
 
     setTrackTitle(trackName);
-
-    alert(`File '${fileName}' imported successfully`);
 }
 
 function validateImportData(data) {
