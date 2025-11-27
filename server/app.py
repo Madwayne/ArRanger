@@ -80,8 +80,11 @@ def get_next_id(cursor, table_name, track_id=None):
         else:
             cursor.execute(f'SELECT MAX(id) FROM {table_name}')
     
-    result = cursor.fetchone()[0]
-    return result + 1 if result is not None else 1
+    row = cursor.fetchone()
+    if row and row[0] is not None:
+        return row[0] + 1
+    else:
+        return 1
 
 # Получить список треков
 @app.route('/tracks', methods=['GET'])
@@ -111,6 +114,8 @@ def get_tracks():
 @app.route('/tracks', methods=['POST'])
 def create_track():
     data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
     
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
@@ -122,19 +127,19 @@ def create_track():
             show_timeline, bpm, signature_numerator, signature_denominator
         ) VALUES (?, ?, ?, ?, ?, ?, ?)
     ''', (
-        data['settings']['trackName'],
+        data.get('settings', {}).get('trackName', ''),
         datetime.now().isoformat(),
         datetime.now().isoformat(),
-        data['settings']['showTimeline'],
-        data['settings']['bpm'],
-        data['settings']['signatureNumerator'],
-        data['settings']['signatureDenominator']
+        data.get('settings', {}).get('showTimeline', False),
+        data.get('settings', {}).get('bpm', 120),
+        data.get('settings', {}).get('signatureNumerator', 4),
+        data.get('settings', {}).get('signatureDenominator', 4)
     ))
     
     track_id = cursor.lastrowid
     
     # Вставка секций
-    for section in data['sections']:
+    for section in data.get('sections', []):
         cursor.execute('''
             INSERT INTO sections (
                 track_id, section_id, section_name, section_color,
@@ -151,7 +156,7 @@ def create_track():
         ))
     
     # Вставка линий
-    for line in data['lines']:
+    for line in data.get('lines', []):
         cursor.execute('''
             INSERT INTO lines (
                 track_id, line_id, line_name, line_sound,
@@ -167,7 +172,7 @@ def create_track():
         ))
     
     # Вставка ячеек
-    for desc in data['descriptions']:
+    for desc in data.get('descriptions', []):
         # Получаем section_id и line_id
         cursor.execute('''
             SELECT section_id FROM sections
@@ -289,6 +294,8 @@ def get_track(track_id):
 @app.route('/tracks/<int:track_id>', methods=['PUT'])
 def update_track(track_id):
     data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
     
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
@@ -300,12 +307,12 @@ def update_track(track_id):
             show_timeline = ?, bpm = ?, signature_numerator = ?, signature_denominator = ?
         WHERE track_id = ?
     ''', (
-        data['settings']['trackName'],
+        data.get('settings', {}).get('trackName', ''),
         datetime.now().isoformat(),
-        data['settings']['showTimeline'],
-        data['settings']['bpm'],
-        data['settings']['signatureNumerator'],
-        data['settings']['signatureDenominator'],
+        data.get('settings', {}).get('showTimeline', False),
+        data.get('settings', {}).get('bpm', 120),
+        data.get('settings', {}).get('signatureNumerator', 4),
+        data.get('settings', {}).get('signatureDenominator', 4),
         track_id
     ))
     
@@ -315,7 +322,7 @@ def update_track(track_id):
     cursor.execute('DELETE FROM lines WHERE track_id = ?', (track_id,))
     
     # Вставка новых секций
-    for section in data['sections']:
+    for section in data.get('sections', []):
         cursor.execute('''
             INSERT INTO sections (
                 track_id, section_id, section_name, section_color,
@@ -332,7 +339,7 @@ def update_track(track_id):
         ))
     
     # Вставка новых линий
-    for line in data['lines']:
+    for line in data.get('lines', []):
         cursor.execute('''
             INSERT INTO lines (
                 track_id, line_id, line_name, line_sound,
@@ -348,7 +355,7 @@ def update_track(track_id):
         ))
     
     # Вставка новых ячеек
-    for desc in data['descriptions']:
+    for desc in data.get('descriptions', []):
         # Получаем section_id и line_id
         cursor.execute('''
             SELECT section_id FROM sections
