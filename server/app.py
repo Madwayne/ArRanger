@@ -1,8 +1,13 @@
 import sqlite3
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import json
 from datetime import datetime
+import logging
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(name)s %(message)s')
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
@@ -28,8 +33,8 @@ def init_db():
         
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS sections (
+                section_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 track_id INTEGER,
-                section_id INTEGER,
                 section_name TEXT NOT NULL,
                 section_color TEXT NOT NULL,
                 comment TEXT,
@@ -41,8 +46,8 @@ def init_db():
         
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS lines (
+                line_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 track_id INTEGER,
-                line_id INTEGER,
                 line_name TEXT NOT NULL,
                 line_sound TEXT,
                 line_comment TEXT,
@@ -63,32 +68,11 @@ def init_db():
         
         conn.commit()
 
-# Функция для получения следующего доступного ID
-def get_next_id(cursor, table_name, track_id=None):
-    if track_id is not None:
-        if table_name == 'sections':
-            cursor.execute('SELECT MAX(section_id) FROM sections WHERE track_id = ?', (track_id,))
-        elif table_name == 'lines':
-            cursor.execute('SELECT MAX(line_id) FROM lines WHERE track_id = ?', (track_id,))
-        else:
-            cursor.execute(f'SELECT MAX(id) FROM {table_name} WHERE track_id = ?', (track_id,))
-    else:
-        if table_name == 'sections':
-            cursor.execute('SELECT MAX(section_id) FROM sections')
-        elif table_name == 'lines':
-            cursor.execute('SELECT MAX(line_id) FROM lines')
-        else:
-            cursor.execute(f'SELECT MAX(id) FROM {table_name}')
-    
-    row = cursor.fetchone()
-    if row and row[0] is not None:
-        return row[0] + 1
-    else:
-        return 1
 
 # Получить список треков
 @app.route('/tracks', methods=['GET'])
 def get_tracks():
+    logger.info("Получение списка треков")
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
     
@@ -108,13 +92,16 @@ def get_tracks():
         })
     
     conn.close()
+    logger.info(f"Получен следующий массив треков: {tracks}")
     return jsonify(tracks)
 
 # Создать трек
 @app.route('/tracks', methods=['POST'])
 def create_track():
     data = request.json
+    logger.info(f"Создание нового трека с данными: {data}")
     if not data:
+        logger.error("Не предоставлены данные для создания трека")
         return jsonify({'error': 'No data provided'}), 400
     
     conn = sqlite3.connect('tracks.db')
@@ -137,17 +124,17 @@ def create_track():
     ))
     
     track_id = cursor.lastrowid
+    logger.info(f"Создан трек с ID: {track_id}")
     
     # Вставка секций
     for section in data.get('sections', []):
         cursor.execute('''
             INSERT INTO sections (
-                track_id, section_id, section_name, section_color,
+                track_id, section_name, section_color,
                 comment, duration, section_position
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             track_id,
-            get_next_id(cursor, 'sections', track_id),
             section['name'],
             section['color'],
             section['comment'],
@@ -159,12 +146,11 @@ def create_track():
     for line in data.get('lines', []):
         cursor.execute('''
             INSERT INTO lines (
-                track_id, line_id, line_name, line_sound,
+                track_id, line_name, line_sound,
                 line_comment, line_position
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?)
         ''', (
             track_id,
-            get_next_id(cursor, 'lines', track_id),
             line['name'],
             line['sound'],
             line['comment'],
@@ -195,11 +181,13 @@ def create_track():
     conn.commit()
     conn.close()
     
+    logger.info(f"Трек с ID {track_id} успешно создан")
     return jsonify({'track_id': track_id}), 201
 
 # Получить трек
 @app.route('/tracks/<int:track_id>', methods=['GET'])
 def get_track(track_id):
+    logger.info(f"Получение трека с ID: {track_id}")
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
     
@@ -213,6 +201,7 @@ def get_track(track_id):
     track_row = cursor.fetchone()
     if not track_row:
         conn.close()
+        logger.error(f"Трек с ID {track_id} не найден")
         return jsonify({'error': 'Track not found'}), 404
     
     # Получаем секции
@@ -288,13 +277,16 @@ def get_track(track_id):
         'descriptions': descriptions
     }
     
+    logger.info(f"Трек с ID {track_id} успешно получен")
     return jsonify(track_data)
 
 # Сохранить трек
 @app.route('/tracks/<int:track_id>', methods=['PUT'])
 def update_track(track_id):
     data = request.json
+    logger.info(f"Обновление трека с ID: {track_id}, данные: {data}")
     if not data:
+        logger.error("Не предоставлены данные для обновления трека")
         return jsonify({'error': 'No data provided'}), 400
     
     conn = sqlite3.connect('tracks.db')
@@ -325,12 +317,11 @@ def update_track(track_id):
     for section in data.get('sections', []):
         cursor.execute('''
             INSERT INTO sections (
-                track_id, section_id, section_name, section_color,
+                track_id, section_name, section_color,
                 comment, duration, section_position
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?)
         ''', (
             track_id,
-            get_next_id(cursor, 'sections', track_id),
             section['name'],
             section['color'],
             section['comment'],
@@ -342,12 +333,11 @@ def update_track(track_id):
     for line in data.get('lines', []):
         cursor.execute('''
             INSERT INTO lines (
-                track_id, line_id, line_name, line_sound,
+                track_id, line_name, line_sound,
                 line_comment, line_position
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?)
         ''', (
             track_id,
-            get_next_id(cursor, 'lines', track_id),
             line['name'],
             line['sound'],
             line['comment'],
@@ -378,11 +368,13 @@ def update_track(track_id):
     conn.commit()
     conn.close()
     
+    logger.info(f"Трек с ID {track_id} успешно обновлен")
     return jsonify({'message': 'Track updated successfully'})
 
 # Удалить трек
 @app.route('/tracks/<int:track_id>', methods=['DELETE'])
 def delete_track(track_id):
+    logger.info(f"Удаление трека с ID: {track_id}")
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
     
@@ -399,6 +391,7 @@ def delete_track(track_id):
     conn.commit()
     conn.close()
     
+    logger.info(f"Трек с ID {track_id} успешно удален")
     return jsonify({'message': 'Track deleted successfully'})
 
 if __name__ == '__main__':
