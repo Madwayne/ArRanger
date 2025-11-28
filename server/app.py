@@ -4,7 +4,7 @@ from flask_cors import CORS
 from datetime import datetime
 import logging
 
-# Настройка логирования
+# Настройка логирования 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(name)s %(message)s')
 logger = logging.getLogger(__name__)
@@ -14,66 +14,67 @@ CORS(app)
 
 # Инициализация базы данных
 def init_db():
-    with sqlite3.connect('tracks.db') as conn:
-        cursor = conn.cursor()
+    conn = sqlite3.connect('tracks.db')
+    cursor = conn.cursor()
     
     # Создание таблиц
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS tracks (
-                track_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                track_name TEXT NOT NULL,
-                created_datetime TEXT NOT NULL,
-                updated_datetime TEXT NOT NULL,
-                show_timeline BOOLEAN NOT NULL,
-                bpm INTEGER NOT NULL,
-                signature_numerator INTEGER NOT NULL,
-                signature_denominator INTEGER NOT NULL
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS sections (
-                section_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                track_id INTEGER,
-                section_name TEXT NOT NULL,
-                section_color TEXT NOT NULL,
-                comment TEXT,
-                duration INTEGER NOT NULL,
-                section_position INTEGER NOT NULL,
-                FOREIGN KEY (track_id) REFERENCES tracks (track_id)
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS lines (
-                line_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                track_id INTEGER,
-                line_name TEXT NOT NULL,
-                line_sound TEXT,
-                line_comment TEXT,
-                line_position INTEGER NOT NULL,
-                FOREIGN KEY (track_id) REFERENCES tracks (track_id)
-            )
-        ''')
-        
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS cells (
-                section_id INTEGER,
-                line_id INTEGER,
-                value TEXT,
-                FOREIGN KEY (section_id) REFERENCES sections (section_id),
-                FOREIGN KEY (line_id) REFERENCES lines (line_id)
-            )
-        ''')
-        
-        conn.commit()
-
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS tracks (
+            track_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            track_name TEXT NOT NULL,
+            created_datetime TEXT NOT NULL,
+            updated_datetime TEXT NOT NULL,
+            show_timeline BOOLEAN NOT NULL,
+            bpm INTEGER NOT NULL,
+            signature_numerator INTEGER NOT NULL,
+            signature_denominator INTEGER NOT NULL
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sections (
+            section_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            track_id INTEGER,
+            section_name TEXT NOT NULL,
+            section_color TEXT NOT NULL,
+            comment TEXT,
+            duration INTEGER NOT NULL,
+            section_position INTEGER NOT NULL,
+            FOREIGN KEY (track_id) REFERENCES tracks (track_id)
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS lines (
+            line_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            track_id INTEGER,
+            line_name TEXT NOT NULL,
+            line_sound TEXT,
+            line_comment TEXT,
+            line_position INTEGER NOT NULL,
+            FOREIGN KEY (track_id) REFERENCES tracks (track_id)
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cells (
+            section_id INTEGER,
+            line_id INTEGER,
+            value TEXT,
+            FOREIGN KEY (section_id) REFERENCES sections (section_id),
+            FOREIGN KEY (line_id) REFERENCES lines (line_id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
 
 # Получить список треков
 @app.route('/tracks', methods=['GET'])
 def get_tracks():
     logger.info("Получение списка треков")
     conn = sqlite3.connect('tracks.db')
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
     cursor.execute('''
@@ -85,13 +86,14 @@ def get_tracks():
     tracks = []
     for row in cursor.fetchall():
         tracks.append({
-            'track_id': row[0],
-            'track_name': row[1],
-            'created_datetime': row[2],
-            'updated_datetime': row[3]
+            'track_id': row["track_id"],
+            'track_name': row["track_name"],
+            'created_datetime': row["created_datetime"],
+            'updated_datetime': row["updated_datetime"]
         })
-    
+
     conn.close()
+
     logger.info(f"Получен следующий массив треков: {tracks}")
     return jsonify(tracks)
 
@@ -107,88 +109,95 @@ def create_track():
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
     
-    # Вставка трека
-    cursor.execute('''
-        INSERT INTO tracks (
-            track_name, created_datetime, updated_datetime,
-            show_timeline, bpm, signature_numerator, signature_denominator
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        data.get('settings', {}).get('trackName', ''),
-        datetime.now().isoformat(),
-        datetime.now().isoformat(),
-        data.get('settings', {}).get('showTimeline', False),
-        data.get('settings', {}).get('bpm', 120),
-        data.get('settings', {}).get('signatureNumerator', 4),
-        data.get('settings', {}).get('signatureDenominator', 4)
-    ))
-    
-    track_id = cursor.lastrowid
-    logger.info(f"Создан трек с ID: {track_id}")
-    
-    # Вставка секций
-    for section in data.get('sections', []):
+    try:
+        # Вставка трека
         cursor.execute('''
-            INSERT INTO sections (
-                track_id, section_name, section_color,
-                comment, duration, section_position
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO tracks (
+                track_name, created_datetime, updated_datetime,
+                show_timeline, bpm, signature_numerator, signature_denominator
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', (
-            track_id,
-            section['name'],
-            section['color'],
-            section['comment'],
-            section['duration'],
-            section['number']
+            data.get('settings', {}).get('trackName', ''),
+            datetime.now().isoformat(),
+            datetime.now().isoformat(),
+            data.get('settings', {}).get('showTimeline', False),
+            data.get('settings', {}).get('bpm', 120),
+            data.get('settings', {}).get('signatureNumerator', 4),
+            data.get('settings', {}).get('signatureDenominator', 4)
         ))
-    
-    # Вставка линий
-    for line in data.get('lines', []):
-        cursor.execute('''
-            INSERT INTO lines (
-                track_id, line_name, line_sound,
-                line_comment, line_position
-            ) VALUES (?, ?, ?, ?, ?)
-        ''', (
-            track_id,
-            line['name'],
-            line['sound'],
-            line['comment'],
-            line['number']
-        ))
-    
-    # Вставка ячеек
-    for desc in data.get('descriptions', []):
-        # Получаем section_id и line_id
-        cursor.execute('''
-            SELECT section_id FROM sections
-            WHERE track_id = ? AND section_position = ?
-        ''', (track_id, desc['sectionNumber']))
-        section_row = cursor.fetchone()
         
-        cursor.execute('''
-            SELECT line_id FROM lines
-            WHERE track_id = ? AND line_position = ?
-        ''', (track_id, desc['lineNumber']))
-        line_row = cursor.fetchone()
+        track_id = cursor.lastrowid
+        logger.info(f"Создан трек с ID: {track_id}")
         
-        if section_row and line_row:
+        # Вставка секций
+        for section in data.get('sections', []):
             cursor.execute('''
-                INSERT INTO cells (section_id, line_id, value)
-                VALUES (?, ?, ?)
-            ''', (section_row[0], line_row[0], desc['description']))
-    
-    conn.commit()
-    conn.close()
-    
-    logger.info(f"Трек с ID {track_id} успешно создан")
-    return jsonify({'track_id': track_id}), 201
+                INSERT INTO sections (
+                    track_id, section_name, section_color,
+                    comment, duration, section_position
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                track_id,
+                section['name'],
+                section['color'],
+                section['comment'],
+                section['duration'],
+                section['number']
+            ))
+        
+        # Вставка линий
+        for line in data.get('lines', []):
+            cursor.execute('''
+                INSERT INTO lines (
+                    track_id, line_name, line_sound,
+                    line_comment, line_position
+                ) VALUES (?, ?, ?, ?, ?)
+            ''', (
+                track_id,
+                line['name'],
+                line['sound'],
+                line['comment'],
+                line['number']
+            ))
+        
+        # Вставка ячеек
+        for desc in data.get('descriptions', []):
+            # Получаем section_id и line_id
+            cursor.execute('''
+                SELECT section_id FROM sections
+                WHERE track_id = ? AND section_position = ?
+            ''', (track_id, desc['sectionNumber']))
+            section_row = cursor.fetchone()
+            
+            cursor.execute('''
+                SELECT line_id FROM lines
+                WHERE track_id = ? AND line_position = ?
+            ''', (track_id, desc['lineNumber']))
+            line_row = cursor.fetchone()
+            
+            if section_row and line_row:
+                cursor.execute('''
+                    INSERT INTO cells (section_id, line_id, value)
+                    VALUES (?, ?, ?)
+                ''', (section_row[0], line_row[0], desc['description']))
+        
+        conn.commit()
+        logger.info(f"Трек с ID {track_id} успешно создан")
+        return jsonify({'track_id': track_id}), 201
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Ошибка при создании трека: {str(e)}")
+        return jsonify({'error': 'Failed to create track'}), 500
+    finally:
+        conn.close()
 
 # Получить трек
 @app.route('/tracks/<int:track_id>', methods=['GET'])
 def get_track(track_id):
     logger.info(f"Получение трека с ID: {track_id}")
+
     conn = sqlite3.connect('tracks.db')
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     
     # Получаем трек
@@ -292,107 +301,118 @@ def update_track(track_id):
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
     
-    # Обновляем трек
-    cursor.execute('''
-        UPDATE tracks
-        SET track_name = ?, updated_datetime = ?,
-            show_timeline = ?, bpm = ?, signature_numerator = ?, signature_denominator = ?
-        WHERE track_id = ?
-    ''', (
-        data.get('settings', {}).get('trackName', ''),
-        datetime.now().isoformat(),
-        data.get('settings', {}).get('showTimeline', False),
-        data.get('settings', {}).get('bpm', 120),
-        data.get('settings', {}).get('signatureNumerator', 4),
-        data.get('settings', {}).get('signatureDenominator', 4),
-        track_id
-    ))
-    
-    # Удаляем старые секции, линии и ячейки
-    cursor.execute('DELETE FROM cells WHERE section_id IN (SELECT section_id FROM sections WHERE track_id = ?)', (track_id,))
-    cursor.execute('DELETE FROM sections WHERE track_id = ?', (track_id,))
-    cursor.execute('DELETE FROM lines WHERE track_id = ?', (track_id,))
-    
-    # Вставка новых секций
-    for section in data.get('sections', []):
+    try:
+        # Обновляем трек
         cursor.execute('''
-            INSERT INTO sections (
-                track_id, section_name, section_color,
-                comment, duration, section_position
-            ) VALUES (?, ?, ?, ?, ?, ?)
+            UPDATE tracks
+            SET track_name = ?, updated_datetime = ?,
+                show_timeline = ?, bpm = ?, signature_numerator = ?, signature_denominator = ?
+            WHERE track_id = ?
         ''', (
-            track_id,
-            section['name'],
-            section['color'],
-            section['comment'],
-            section['duration'],
-            section['number']
+            data.get('settings', {}).get('trackName', ''),
+            datetime.now().isoformat(),
+            data.get('settings', {}).get('showTimeline', False),
+            data.get('settings', {}).get('bpm', 120),
+            data.get('settings', {}).get('signatureNumerator', 4),
+            data.get('settings', {}).get('signatureDenominator', 4),
+            track_id
         ))
-    
-    # Вставка новых линий
-    for line in data.get('lines', []):
-        cursor.execute('''
-            INSERT INTO lines (
-                track_id, line_name, line_sound,
-                line_comment, line_position
-            ) VALUES (?, ?, ?, ?, ?)
-        ''', (
-            track_id,
-            line['name'],
-            line['sound'],
-            line['comment'],
-            line['number']
-        ))
-    
-    # Вставка новых ячеек
-    for desc in data.get('descriptions', []):
-        # Получаем section_id и line_id
-        cursor.execute('''
-            SELECT section_id FROM sections
-            WHERE track_id = ? AND section_position = ?
-        ''', (track_id, desc['sectionNumber']))
-        section_row = cursor.fetchone()
         
-        cursor.execute('''
-            SELECT line_id FROM lines
-            WHERE track_id = ? AND line_position = ?
-        ''', (track_id, desc['lineNumber']))
-        line_row = cursor.fetchone()
+        # Удаляем старые секции, линии и ячейки
+        cursor.execute('DELETE FROM cells WHERE section_id IN (SELECT section_id FROM sections WHERE track_id = ?)', (track_id,))
+        cursor.execute('DELETE FROM sections WHERE track_id = ?', (track_id,))
+        cursor.execute('DELETE FROM lines WHERE track_id = ?', (track_id,))
         
-        if section_row and line_row:
+        # Вставка новых секций
+        for section in data.get('sections', []):
             cursor.execute('''
-                INSERT INTO cells (section_id, line_id, value)
-                VALUES (?, ?, ?)
-            ''', (section_row[0], line_row[0], desc['description']))
-    
-    conn.commit()
-    conn.close()
-    
-    logger.info(f"Трек с ID {track_id} успешно обновлен")
-    return jsonify({'message': 'Track updated successfully'})
+                INSERT INTO sections (
+                    track_id, section_name, section_color,
+                    comment, duration, section_position
+                ) VALUES (?, ?, ?, ?, ?, ?)
+            ''', (
+                track_id,
+                section['name'],
+                section['color'],
+                section['comment'],
+                section['duration'],
+                section['number']
+            ))
+        
+        # Вставка новых линий
+        for line in data.get('lines', []):
+            cursor.execute('''
+                INSERT INTO lines (
+                    track_id, line_name, line_sound,
+                    line_comment, line_position
+                ) VALUES (?, ?, ?, ?, ?)
+            ''', (
+                track_id,
+                line['name'],
+                line['sound'],
+                line['comment'],
+                line['number']
+            ))
+        
+        # Вставка новых ячеек
+        for desc in data.get('descriptions', []):
+            # Получаем section_id и line_id
+            cursor.execute('''
+                SELECT section_id FROM sections
+                WHERE track_id = ? AND section_position = ?
+            ''', (track_id, desc['sectionNumber']))
+            section_row = cursor.fetchone()
+            
+            cursor.execute('''
+                SELECT line_id FROM lines
+                WHERE track_id = ? AND line_position = ?
+            ''', (track_id, desc['lineNumber']))
+            line_row = cursor.fetchone()
+            
+            if section_row and line_row:
+                cursor.execute('''
+                    INSERT INTO cells (section_id, line_id, value)
+                    VALUES (?, ?, ?)
+                ''', (section_row[0], line_row[0], desc['description']))
+        
+        conn.commit()
+        logger.info(f"Трек с ID {track_id} успешно обновлен")
+        return jsonify({'message': 'Track updated successfully'})
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Ошибка при обновлении трека: {str(e)}")
+        return jsonify({'error': 'Failed to update track'}), 500
+    finally:
+        conn.close()
 
 # Удалить трек
 @app.route('/tracks/<int:track_id>', methods=['DELETE'])
 def delete_track(track_id):
     logger.info(f"Удаление трека с ID: {track_id}")
+
     conn = sqlite3.connect('tracks.db')
     cursor = conn.cursor()
     
-    # Удаляем ячейки
-    cursor.execute('DELETE FROM cells WHERE section_id IN (SELECT section_id FROM sections WHERE track_id = ?)', (track_id,))
-    
-    # Удаляем секции и линии
-    cursor.execute('DELETE FROM sections WHERE track_id = ?', (track_id,))
-    cursor.execute('DELETE FROM lines WHERE track_id = ?', (track_id,))
-    
-    # Удаляем трек
-    cursor.execute('DELETE FROM tracks WHERE track_id = ?', (track_id,))
-    
-    conn.commit()
-    conn.close()
-    
-    logger.info(f"Трек с ID {track_id} успешно удален")
-    return jsonify({'message': 'Track deleted successfully'})
+    try:
+        # Удаляем ячейки
+        cursor.execute('DELETE FROM cells WHERE section_id IN (SELECT section_id FROM sections WHERE track_id = ?)', (track_id,))
+        
+        # Удаляем секции и линии
+        cursor.execute('DELETE FROM sections WHERE track_id = ?', (track_id,))
+        cursor.execute('DELETE FROM lines WHERE track_id = ?', (track_id,))
+        
+        # Удаляем трек
+        cursor.execute('DELETE FROM tracks WHERE track_id = ?', (track_id,))
+        
+        conn.commit()
+        logger.info(f"Трек с ID {track_id} успешно удален")
+        return jsonify({'message': 'Track deleted successfully'})
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Ошибка при удалении трека: {str(e)}")
+        return jsonify({'error': 'Failed to delete track'}), 500
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     init_db()
