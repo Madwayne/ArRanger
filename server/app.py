@@ -273,6 +273,22 @@ def get_track(track_id):
     
     conn.close()
     
+    conn.close()
+    
+    # Получаем дату обновления трека
+    conn2 = sqlite3.connect('tracks.db')
+    conn2.row_factory = sqlite3.Row
+    cursor2 = conn2.cursor()
+    
+    cursor2.execute('''
+        SELECT updated_datetime
+        FROM tracks
+        WHERE track_id = ?
+    ''', (track_id,))
+    
+    updated_datetime_row = cursor2.fetchone()
+    conn2.close()
+    
     track_data = {
         'settings': {
             'trackName': track_row[0],
@@ -283,7 +299,8 @@ def get_track(track_id):
         },
         'sections': sections,
         'lines': lines,
-        'descriptions': descriptions
+        'descriptions': descriptions,
+        'updated_datetime': updated_datetime_row[0] if updated_datetime_row else None
     }
     
     logger.info(f"Трек с ID {track_id} успешно получен")

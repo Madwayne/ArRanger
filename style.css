@@ -224,7 +224,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px;
+    padding: 5px;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -234,16 +234,15 @@ body {
 
 .track-info {
     flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: flex-end;
 }
 
 .track-name {
     font-weight: bold;
     font-size: 16px;
-}
-
-.track-date {
-    font-size: 12px;
-    color: #888;
 }
 
 .track-actions {
@@ -300,6 +299,13 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 3px;
+}
+
+.track-date {
+    font-size: 12px;
+    color: #888;
+    margin-left: 10px;
+    white-space: nowrap;
 }
 
 .edit-btn:hover {

@@ -1097,7 +1097,7 @@ function openTrackModal() {
                 
                 const trackDate = document.createElement('div');
                 trackDate.className = 'track-date';
-                trackDate.textContent = new Date(track.updated_datetime).toLocaleString();
+                trackDate.textContent = `modified: ${new Date(track.updated_datetime).toLocaleString()}`;
                 
                 trackInfo.appendChild(trackName);
                 trackInfo.appendChild(trackDate);
@@ -1145,6 +1145,8 @@ function openTrack(trackId) {
             // Применяем данные трека
             applyImportedData(data);
             currentTrackId = trackId;
+            // Устанавливаем название трека в заголовке
+            setTrackTitle(data.settings.trackName, data.updated_datetime);
             closeOpenTrackModal();
         })
         .catch(error => {
@@ -1390,7 +1392,7 @@ function applySettings(settings) {
     }
 }
 
-function setTrackTitle(trackName) {
+function setTrackTitle(trackName, updatedDatetime = null) {
     const trackTitleElement = document.getElementById('trackTitle');
     if (!trackTitleElement) return;
 
@@ -1401,6 +1403,17 @@ function setTrackTitle(trackName) {
         const span = trackTitleElement.querySelector('span');
         if (span) {
             span.textContent = trackName;
+        }
+    }
+    
+    // Обновляем дату
+    const trackDateElement = document.getElementById('trackDate');
+    if (trackDateElement) {
+        if (updatedDatetime) {
+            const date = new Date(updatedDatetime);
+            trackDateElement.textContent = `modified: ${date.toLocaleString()}`;
+        } else {
+            trackDateElement.textContent = '';
         }
     }
 }
